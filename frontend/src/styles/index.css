@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Leaflet map needs explicit height to render */
+.leaflet-container {
+  height: 60vh;
+  width: 100%;
+  border-radius: 0.75rem;
+  z-index: 0;
+}
+
+/* Smooth transitions everywhere */
+* {
+  transition: background-color 0.15s, border-color 0.15s;
+}
+
+/* Severity badge colors */
+.severity-1 { @apply bg-gray-100 text-gray-600; }
+.severity-2 { @apply bg-amber-100 text-amber-700; }
+.severity-3 { @apply bg-orange-100 text-orange-700; }
+.severity-4 { @apply bg-red-100 text-red-700; }
