@@ -6,6 +6,8 @@ import HomePage from './pages/HomePage';
 import ReportDetailPage from './pages/ReportDetailPage';
 import SubmitReportPage from './pages/SubmitReportPage';
 import ScorecardPage     from './pages/ScorecardPage';
+import OfficialDashboardPage from './pages/OfficialDashboardPage';
+import NotFoundPage from './pages/NotFoundPage';
 
 // Protects routes that require login
 const PrivateRoute = ({ children }) => {
@@ -24,12 +26,13 @@ export default function App() {
             <Route path="/"             element={<HomePage />} />
             <Route path="/auth"         element={<AuthPage />} />
             <Route path="/reports/:id"  element={<ReportDetailPage />} />
-            <Route path="/scorecard"    element={<ScorecardPage />} />   {/* ADD THIS */}
+            <Route path="/scorecard"    element={<ScorecardPage />} />  
+            <Route path="/submit" element={<SubmitReportPage />} />
             <Route
-              path="/submit"
-              element={<PrivateRoute><SubmitReportPage /></PrivateRoute>}
+              path="/dashboard"
+              element={<PrivateRoute><OfficialDashboardPage /></PrivateRoute>}
             />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFoundPage />} />
           </Routes>
         </main>
       </BrowserRouter>

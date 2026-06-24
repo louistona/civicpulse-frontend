@@ -29,6 +29,7 @@ export default function Navbar() {
         <Link to="/scorecard" className="text-text-muted hover:text-primary transition-colors">
           Scorecard
         </Link>
+        
 
         {user ? (
           <>
@@ -43,11 +44,16 @@ export default function Navbar() {
             </button>
           </>
         ) : (
-          <Link
-            to="/auth"
-            className="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary-dk transition-colors"
-          >
-            Log in
+          <Link to="/submit"
+            className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dk transition-colors">
+            + Report Issue
+          </Link>
+        )}
+        
+        {user?.role === 'official' && (
+          <Link to="/dashboard"
+            className="text-text-muted hover:text-primary transition-colors text-sm font-medium">
+            Dashboard
           </Link>
         )}
       </div>
