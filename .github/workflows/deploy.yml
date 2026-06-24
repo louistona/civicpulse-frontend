@@ -1,0 +1,63 @@
+# .github/workflows/deploy.yml
+# Runs on every push to main.
+# Installs packages, builds the React app, then triggers Vercel to redeploy.
+
+name: Frontend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+
+  # Job 1: Build the React app to catch any compile errors
+  build:
+    name: Install and Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      # This builds the production version of your React app.
+      # If any component has a syntax error, this step will fail and catch it
+      # before it ever reaches your live site.
+      - name: Build production bundle
+        run: npm run build
+        env:
+          # Provide a placeholder API URL for the build step
+          # (the real one is set in Vercel's dashboard)
+          VITE_API_URL: https://civicpulse-api.onrender.com/api
+
+      # Confirm the build output folder was created
+      - name: Verify build output
+        run: |
+          ls dist/
+          echo "Build successful — dist/ folder exists"
+
+  # Job 2: Deploy to Vercel (only after build passes, only on main branch)
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Trigger Vercel deployment
+        run: |
+          curl -X POST "${{ secrets.VERCEL_DEPLOY_HOOK_URL }}"
+        # This sends a signal to Vercel saying "new code is ready, please redeploy"
+        # The VERCEL_DEPLOY_HOOK_URL is set up in Step 8c below
