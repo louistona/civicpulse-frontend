@@ -44,9 +44,10 @@ export default function Navbar() {
             </button>
           </>
         ) : (
-          <Link to="/submit"
-            className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dk transition-colors">
-            + Report Issue
+          <Link
+            to="/auth/citizen"
+            className="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary-dk transition-colors text-sm font-medium">
+            Log in
           </Link>
         )}
         

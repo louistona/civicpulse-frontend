@@ -6,7 +6,10 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.heat';
 import api from '../services/api';
 import ReportCard from '../components/ReportCard';
+// eslint-disable-next-line no-unused-vars
 import StatusBadge from '../components/StatusBadge';
+import ReportLoginModal from '../components/ReportLoginModal';
+import { useAuth } from '../context/AuthContext';
 
 const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
 const SEVERITY_COLORS = { 1: '#6B7280', 2: '#E89B2F', 3: '#F97316', 4: '#D9534F' };
@@ -30,6 +33,8 @@ export default function HomePage() {
   const [heatPoints, setHeat]       = useState([]);
   const [loading,    setLoading]    = useState(true);
   const [filter,     setFilter]     = useState({ severity: '' });
+  const [showModal, setShowModal] = useState(false);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const KIGALI_CENTER = [-1.9441, 30.0619];
 
@@ -72,10 +77,11 @@ export default function HomePage() {
             <option value="2">Medium</option>
             <option value="1">Low</option>
           </select>
-          <Link to="/submit"
+          <button
+            onClick={() => user ? navigate('/submit') : setShowModal(true)}
             className="bg-primary text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-primary-dk transition-colors whitespace-nowrap">
             + Report Issue
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -197,6 +203,7 @@ export default function HomePage() {
           ))}
         </div>
       )}
+      {showModal && <ReportLoginModal onClose={() => setShowModal(false)} />}
     </div>
   );
 }

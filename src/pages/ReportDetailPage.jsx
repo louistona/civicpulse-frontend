@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import StatusBadge from '../components/StatusBadge';
 import { useAuth } from '../context/AuthContext';
+import VotePanel from '../components/VotePanel';
 
 const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
 const ALL_STATUSES = ['received', 'under_review', 'in_progress', 'resolved'];
@@ -167,6 +168,7 @@ export default function ReportDetailPage() {
                 );
               })}
             </div>
+            <VotePanel reportId={id} reportStatus={report.status} />
           </div>
 
           {/* Official update form */}
