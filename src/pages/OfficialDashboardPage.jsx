@@ -16,19 +16,23 @@ export default function OfficialDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [reports,   setReports]   = useState([]);
-  const [loading,   setLoading]   = useState(true);
-  const [filters,   setFilters]   = useState({ category: '', severity: '', district: '', status: '' });
-  const [categories,setCategories]= useState([]);
-  const [districts, setDistricts] = useState([]);
-  const [stats,     setStats]     = useState({ total: 0, received: 0, in_progress: 0, resolved: 0 });
+  const [reports,    setReports]    = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [filters,    setFilters]    = useState({ category: '', severity: '', district: '', status: '' });
+  const [categories, setCategories] = useState([]);
+  const [districts,  setDistricts]  = useState([]);
+  const [stats,      setStats]      = useState({ total: 0, received: 0, in_progress: 0, resolved: 0 });
 
-  // Redirect non-officials
+  // Redirect non-officials away from this page
   useEffect(() => {
     if (user && user.role !== 'official') navigate('/');
-    if (!user) navigate('/auth');
+    // FIX: was navigate('/auth') which sends to the citizen login page.
+    // Officials whose session has expired should be sent to the official
+    // login page, not the citizen page with a phone + PIN form.
+    if (!user) navigate('/auth/official');
   }, [user, navigate]);
 
+  // Load filter dropdown data once
   useEffect(() => {
     Promise.all([
       api.get('/reports/categories'),
@@ -39,6 +43,7 @@ export default function OfficialDashboardPage() {
     });
   }, []);
 
+  // Reload reports whenever filters change
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
@@ -79,10 +84,10 @@ export default function OfficialDashboardPage() {
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Total Reports',  value: stats.total,       color: 'bg-bg border-border' },
-          { label: 'Awaiting Action',value: stats.received,    color: 'bg-red-50 border-red-200' },
-          { label: 'In Progress',    value: stats.in_progress, color: 'bg-amber-50 border-amber-200' },
-          { label: 'Resolved',       value: stats.resolved,    color: 'bg-green-50 border-green-200' },
+          { label: 'Total Reports',   value: stats.total,       color: 'bg-bg border-border' },
+          { label: 'Awaiting Action', value: stats.received,    color: 'bg-red-50 border-red-200' },
+          { label: 'In Progress',     value: stats.in_progress, color: 'bg-amber-50 border-amber-200' },
+          { label: 'Resolved',        value: stats.resolved,    color: 'bg-green-50 border-green-200' },
         ].map(stat => (
           <div key={stat.label} className={`border rounded-xl p-4 ${stat.color}`}>
             <p className="text-2xl font-bold text-text-main">{stat.value}</p>
@@ -93,55 +98,71 @@ export default function OfficialDashboardPage() {
 
       {/* Filters */}
       <div className="bg-surface border border-border rounded-xl p-4 mb-6">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">Filter Reports</p>
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
+          Filter Reports
+        </p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+
+          {/* Status and Severity filters */}
           {[
             {
               label: 'Status', key: 'status',
               options: [
-                { value: '', label: 'All statuses' },
-                { value: 'received',     label: 'Received' },
-                { value: 'under_review', label: 'Under Review' },
-                { value: 'in_progress',  label: 'In Progress' },
-                { value: 'resolved',     label: 'Resolved' },
-              ]
+                { value: '',              label: 'All statuses' },
+                { value: 'received',      label: 'Received' },
+                { value: 'under_review',  label: 'Under Review' },
+                { value: 'in_progress',   label: 'In Progress' },
+                { value: 'resolved',      label: 'Resolved' },
+              ],
             },
             {
               label: 'Severity', key: 'severity',
               options: [
-                { value: '', label: 'All severities' },
+                { value: '',  label: 'All severities' },
                 { value: '4', label: 'Critical' },
                 { value: '3', label: 'High' },
                 { value: '2', label: 'Medium' },
                 { value: '1', label: 'Low' },
-              ]
+              ],
             },
           ].map(({ label, key, options }) => (
             <div key={key}>
               <label className="block text-xs text-text-muted mb-1">{label}</label>
-              <select value={filters[key]}
+              <select
+                value={filters[key]}
                 onChange={e => setFilters(f => ({ ...f, [key]: e.target.value }))}
-                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
-                {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                {options.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
             </div>
           ))}
+
+          {/* Category filter */}
           <div>
             <label className="block text-xs text-text-muted mb-1">Category</label>
-            <select value={filters.category}
+            <select
+              value={filters.category}
               onChange={e => setFilters(f => ({ ...f, category: e.target.value }))}
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            >
               <option value="">All categories</option>
               {categories.map(c => (
                 <option key={c.category_id} value={c.category_id}>{c.name}</option>
               ))}
             </select>
           </div>
+
+          {/* District filter */}
           <div>
             <label className="block text-xs text-text-muted mb-1">District</label>
-            <select value={filters.district}
+            <select
+              value={filters.district}
               onChange={e => setFilters(f => ({ ...f, district: e.target.value }))}
-              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
+              className="w-full border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            >
               <option value="">All districts</option>
               {districts.map(d => (
                 <option key={d.district_id} value={d.district_id}>{d.name}</option>
@@ -149,17 +170,19 @@ export default function OfficialDashboardPage() {
             </select>
           </div>
         </div>
-        {/* Reset filters */}
+
+        {/* Reset filters button — only shown when at least one filter is active */}
         {Object.values(filters).some(v => v !== '') && (
           <button
             onClick={() => setFilters({ category: '', severity: '', district: '', status: '' })}
-            className="mt-3 text-xs text-primary hover:underline">
+            className="mt-3 text-xs text-primary hover:underline"
+          >
             Reset all filters
           </button>
         )}
       </div>
 
-      {/* Reports table */}
+      {/* Reports list */}
       {loading ? (
         <div className="space-y-3">
           {[...Array(5)].map((_, i) => (
@@ -172,14 +195,20 @@ export default function OfficialDashboardPage() {
       ) : reports.length === 0 ? (
         <div className="text-center py-16 text-text-muted">
           <p className="text-lg font-medium">No reports match your filters.</p>
-          <button onClick={() => setFilters({ category: '', severity: '', district: '', status: '' })}
-            className="mt-3 text-sm text-primary hover:underline">Clear filters</button>
+          <button
+            onClick={() => setFilters({ category: '', severity: '', district: '', status: '' })}
+            className="mt-3 text-sm text-primary hover:underline"
+          >
+            Clear filters
+          </button>
         </div>
       ) : (
         <div className="space-y-3">
           {reports.map(report => (
-            <div key={report.report_id}
-              className="bg-surface border border-border rounded-xl p-4 hover:shadow-sm transition-shadow">
+            <div
+              key={report.report_id}
+              className="bg-surface border border-border rounded-xl p-4 hover:shadow-sm transition-shadow"
+            >
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -191,15 +220,19 @@ export default function OfficialDashboardPage() {
                     </span>
                     <span className="text-xs text-text-muted">{report.district_name}</span>
                   </div>
-                  <h3 className="font-semibold text-text-main text-sm truncate">{report.title}</h3>
+                  <h3 className="font-semibold text-text-main text-sm truncate">
+                    {report.title}
+                  </h3>
                   <p className="text-xs text-text-muted mt-0.5">
-                    Submitted by {report.submitted_by || 'Anonymous'} · {formatDate(report.created_at)}
+                    Submitted by {report.submitted_by || report.submitter_name || 'Anonymous'} · {formatDate(report.created_at)}
                   </p>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0">
                   <StatusBadge status={report.status} />
-                  <Link to={`/reports/${report.report_id}`}
-                    className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dk transition-colors font-medium">
+                  <Link
+                    to={`/reports/${report.report_id}`}
+                    className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dk transition-colors font-medium"
+                  >
                     Manage →
                   </Link>
                 </div>

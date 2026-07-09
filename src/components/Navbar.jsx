@@ -12,6 +12,7 @@ export default function Navbar() {
 
   return (
     <nav className="bg-surface border-b border-border px-4 py-3 flex items-center justify-between sticky top-0 z-50 shadow-sm">
+
       {/* Logo */}
       <Link to="/" className="flex items-center gap-2">
         <span className="text-primary font-bold text-xl tracking-tight">CivicPulse</span>
@@ -22,6 +23,7 @@ export default function Navbar() {
 
       {/* Nav links */}
       <div className="flex items-center gap-4 text-sm font-medium">
+
         <Link to="/" className="text-text-muted hover:text-primary transition-colors">
           Heatmap
         </Link>
@@ -29,13 +31,27 @@ export default function Navbar() {
         <Link to="/scorecard" className="text-text-muted hover:text-primary transition-colors">
           Scorecard
         </Link>
-        
 
         {user ? (
           <>
+            {/* FIX: Dashboard link is now INSIDE the logged-in block and appears
+                BEFORE the user name and logout button. Previously it was placed
+                after the logout button causing the nav to read:
+                "Name · Official | Log out | Dashboard" which looked broken.
+                Now it reads: "Dashboard | Name · Official | Log out" */}
+            {user.role === 'official' && (
+              <Link
+                to="/dashboard"
+                className="text-text-muted hover:text-primary transition-colors"
+              >
+                Dashboard
+              </Link>
+            )}
+
             <span className="text-text-muted hidden sm:inline">
               {user.name} · <span className="capitalize">{user.role}</span>
             </span>
+
             <button
               onClick={handleLogout}
               className="bg-bg border border-border text-text-main px-3 py-1.5 rounded-lg hover:border-danger hover:text-danger transition-colors"
@@ -46,15 +62,9 @@ export default function Navbar() {
         ) : (
           <Link
             to="/auth/citizen"
-            className="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary-dk transition-colors text-sm font-medium">
+            className="bg-primary text-white px-4 py-1.5 rounded-lg hover:bg-primary-dk transition-colors text-sm font-medium"
+          >
             Log in
-          </Link>
-        )}
-        
-        {user?.role === 'official' && (
-          <Link to="/dashboard"
-            className="text-text-muted hover:text-primary transition-colors text-sm font-medium">
-            Dashboard
           </Link>
         )}
       </div>
