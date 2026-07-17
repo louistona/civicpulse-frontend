@@ -32,6 +32,10 @@ export default function Navbar() {
           Scorecard
         </Link>
 
+        <Link to="/resolved" className="text-text-muted hover:text-primary transition-colors text-sm font-medium">
+          Resolved
+        </Link>
+
         {user ? (
           <>
             {/* FIX: Dashboard link is now INSIDE the logged-in block and appears

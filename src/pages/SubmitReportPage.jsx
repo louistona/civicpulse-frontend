@@ -6,6 +6,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import LocationSelector from '../components/LocationSelector';
 import PhotoUploader from '../components/PhotoUploader';
+import PostSubmitAccountPrompt from '../components/PostSubmitAccountPrompt';
 
 // Severity option definitions — label, description and selected border/bg colour
 const SEVERITY_OPTIONS = [
@@ -39,6 +40,8 @@ export default function SubmitReportPage() {
   const [mapLocation,      setMapLocation]      = useState(null); // { lat, lng }
   const [submitterName,    setSubmitterName]     = useState('');
   const [submitterContact, setSubmitterContact]  = useState('');
+  const [showAccountPrompt, setShowAccountPrompt] = useState(false);
+  const [submittedReportId,  setSubmittedReportId]  = useState(null);
 
   // ── Administrative location — managed by LocationSelector ─────────────────
   // Captures district_id, sector_id, cell_id and village from the cascading
@@ -90,51 +93,50 @@ export default function SubmitReportPage() {
 
   // ── Form submission ───────────────────────────────────────────────────────
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    const errors = validate();
-    if (Object.keys(errors).length > 0) {
-      setFieldErrors(errors);
-      return;
-    }
-    setSubmitting(true);
-    try {
-      // Step 1 — create the report record
-      const res = await api.post('/reports', {
-        title:             title.trim(),
-        description:       description.trim(),
-        category_id:       parseInt(categoryId),
-        district_id:       parseInt(location.district_id),
-        sector_id:         parseInt(location.sector_id),
-        cell_id:           parseInt(location.cell_id),
-        village:           location.village || null,
-        severity,
-        latitude:          mapLocation.lat,
-        longitude:         mapLocation.lng,
-        // Use logged-in user's name when available; otherwise the optional field
-        submitter_name:    user?.name || submitterName.trim() || 'Anonymous',
-        submitter_contact: submitterContact.trim() || null,
+  e.preventDefault();
+  setError('');
+  const errors = validate();
+  if (Object.keys(errors).length > 0) { setFieldErrors(errors); return; }
+  setSubmitting(true);
+  try {
+    const res = await api.post('/reports', {
+      title:             title.trim(),
+      description:       description.trim(),
+      category_id:       parseInt(categoryId),
+      district_id:       parseInt(location.district_id),
+      sector_id:         parseInt(location.sector_id),
+      cell_id:           parseInt(location.cell_id),
+      village:           location.village || null,
+      severity,
+      latitude:          mapLocation.lat,
+      longitude:         mapLocation.lng,
+      submitter_name:    user?.name || submitterName.trim() || 'Anonymous',
+      submitter_contact: submitterContact.trim() || null,
+    });
+
+    const newReportId = res.data.report_id;
+
+    if (photoUrl) {
+      await api.post(`/photos/${newReportId}/submission`, {
+        photo_url: photoUrl,
+        caption:   title.trim(),
       });
-
-      const newReportId = res.data.report_id;
-
-      // Step 2 — save the Cloudinary photo URL to the report_photos table.
-      // The photo was already uploaded to Cloudinary during the upload step —
-      // this call only saves the URL reference, not the file itself.
-      if (photoUrl) {
-        await api.post(`/photos/${newReportId}/submission`, {
-          photo_url: photoUrl,
-          caption:   title.trim(),
-        });
-      }
-
-      // Step 3 — navigate to the new report's detail page
-      navigate(`/reports/${newReportId}`);
-    } catch (err) {
-      setError(err.response?.data?.error || 'Submission failed. Please try again.');
-    } finally {
-      setSubmitting(false);
     }
+
+    setSubmittedReportId(newReportId);
+
+    // If user is not logged in, show account creation prompt
+    // If already logged in, navigate directly to the report
+    if (!user) {
+      setShowAccountPrompt(true);
+    } else {
+      navigate(`/reports/${newReportId}`);
+    }
+  } catch (err) {
+    setError(err.response?.data?.error || 'Submission failed. Please try again.');
+  } finally {
+    setSubmitting(false);
+  }
   };
 
   // Clears a specific field error when the user interacts with that field
@@ -439,6 +441,12 @@ export default function SubmitReportPage() {
         </p>
 
       </form>
+      {showAccountPrompt && (
+        <PostSubmitAccountPrompt
+          reportId={submittedReportId}
+          onDismiss={() => navigate(`/reports/${submittedReportId}`)}
+        />
+      )}
     </div>
   );
 }

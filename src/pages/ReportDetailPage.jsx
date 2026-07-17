@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import VotePanel from '../components/VotePanel';
 import ReportPhotos from '../components/ReportPhotos';
 import PhotoUploader from '../components/PhotoUploader';
+import ResolutionVotePanel from '../components/ResolutionVotePanel';
 
 const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
 const SEVERITY_COLORS = {
@@ -303,7 +304,18 @@ export default function ReportDetailPage() {
               Previously it was nested inside the timeline's closing </div> which
               caused it to render as a child element of the timeline panel with
               no visual separation. It is now a proper sibling card. */}
-          <VotePanel reportId={id} reportStatus={report.status} />
+          {/* Show different vote panels based on status */}
+          {report.status === 'resolved' ? (
+          <ResolutionVotePanel
+            reportId={id}
+            onReverted={() => {
+              // Re-fetch report to update status badge
+              fetchReport();
+            }}
+          />
+          ) : (
+            <VotePanel reportId={id} reportStatus={report.status} />
+          )}
 
           {/* Official status update form — only visible to government officials */}
           {user?.role === 'official' && (

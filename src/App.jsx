@@ -10,6 +10,7 @@ import ScorecardPage      from './pages/ScorecardPage';
 import OfficialDashboardPage from './pages/OfficialDashboardPage';
 import VotingPage         from './pages/VotingPage';
 import NotFoundPage       from './pages/NotFoundPage';
+import ResolvedReportsPage from './pages/ResolvedReportsPage';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
@@ -36,6 +37,7 @@ export default function App() {
             <Route path="/reports/:id"    element={<ReportDetailPage />} />
             <Route path="/scorecard"      element={<ScorecardPage />} />
             <Route path="/vote/:id"       element={<VotingPage />} />
+            <Route path="/resolved" element={<ResolvedReportsPage />} />
 
             {/* Citizen protected */}
             <Route path="/submit"
