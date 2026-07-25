@@ -92,6 +92,18 @@ export default function SubmitReportPage() {
   };
 
   // ── Form submission ───────────────────────────────────────────────────────
+  // FIX: this used to POST /reports first, then — only if that succeeded —
+  // separately POST /photos/:id/submission. If the second call failed (bad
+  // network, or CLOUDINARY_CLOUD_NAME mismatch between frontend/backend
+  // env vars), the whole function fell into the catch block and showed
+  // "Submission failed. Please try again." even though the report had
+  // ALREADY been created — so a retry created a duplicate report, and the
+  // original was left with no photo attached to report_photos (silently
+  // broken photo display, since the detail page only reads from
+  // report_photos, not reports.photo_url). The backend's POST /reports now
+  // accepts photo_url directly and writes both rows in a single database
+  // transaction (see createReport in reportController.js), so this is now
+  // one request instead of two, and either fully succeeds or fully fails.
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
@@ -110,19 +122,12 @@ export default function SubmitReportPage() {
       severity,
       latitude:          mapLocation.lat,
       longitude:         mapLocation.lng,
+      photo_url:         photoUrl,
       submitter_name:    user?.name || submitterName.trim() || 'Anonymous',
       submitter_contact: submitterContact.trim() || null,
     });
 
     const newReportId = res.data.report_id;
-
-    if (photoUrl) {
-      await api.post(`/photos/${newReportId}/submission`, {
-        photo_url: photoUrl,
-        caption:   title.trim(),
-      });
-    }
-
     setSubmittedReportId(newReportId);
 
     // If user is not logged in, show account creation prompt
@@ -336,8 +341,9 @@ export default function SubmitReportPage() {
               2. PhotoUploader sends the file directly to Cloudinary via XHR
               3. Cloudinary returns a secure_url
               4. onUploadComplete sets photoUrl with that URL
-              5. On form submit, the URL is POSTed to /api/photos/:id/submission
-                 which inserts a row into report_photos and sets has_submission_photo=TRUE */}
+              5. On form submit, photoUrl is included directly in the POST /api/reports
+                 body; the backend inserts the report_photos row in the same DB
+                 transaction as the report (see createReport in reportController.js) */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <h2 className="font-semibold text-text-main mb-1">
             Photo Evidence <span className="text-danger">*</span>

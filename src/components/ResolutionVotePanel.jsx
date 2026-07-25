@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
 
 export default function ResolutionVotePanel({ reportId, onReverted }) {
@@ -7,7 +7,18 @@ export default function ResolutionVotePanel({ reportId, onReverted }) {
   const [voting,  setVoting]  = useState(false);
   const [message, setMessage] = useState('');
 
-  const fetch = async () => {
+  // FIX: `fetch` was previously redefined on every render (a plain
+  // function, not memoized) and included in its own effect's dependency
+  // array. Every render created a new function reference -> the effect saw
+  // a "changed" dependency -> ran again -> called setData/setLoading ->
+  // triggered another render -> new function reference -> effect ran
+  // again... This produced a tight, continuous re-fetch loop rather than
+  // fetching once per reportId (an eslint-disable comment had been used to
+  // silence the linter warning about this instead of fixing it). Wrapping
+  // in useCallback with [reportId] as its only dependency gives the effect
+  // a stable reference, so it now only re-runs when reportId actually
+  // changes — matching the pattern already used correctly in VotePanel.jsx.
+  const fetchVotes = useCallback(async () => {
     try {
       const res = await api.get(`/resolution-votes/${reportId}`);
       setData(res.data);
@@ -16,10 +27,9 @@ export default function ResolutionVotePanel({ reportId, onReverted }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [reportId]);
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { fetch(); }, [fetch, reportId]);
+  useEffect(() => { fetchVotes(); }, [fetchVotes]);
 
   const vote = async (voteType) => {
     setVoting(true); setMessage('');
@@ -34,7 +44,7 @@ export default function ResolutionVotePanel({ reportId, onReverted }) {
         setMessage('Your vote was recorded.');
         setTimeout(() => setMessage(''), 3000);
       }
-      await fetch();
+      await fetchVotes();
     } catch (err) {
       setMessage(err.response?.data?.error || 'Could not record vote.');
     } finally {

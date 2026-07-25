@@ -9,6 +9,8 @@ import ReportCard from '../components/ReportCard';
 // eslint-disable-next-line no-unused-vars
 import StatusBadge from '../components/StatusBadge';
 import ReportLoginModal from '../components/ReportLoginModal';
+import Pagination from '../components/Pagination';
+import usePaginatedReports from '../hooks/usePaginatedReports';
 import { useAuth } from '../context/AuthContext';
 
 const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
@@ -29,32 +31,49 @@ function HeatmapLayer({ points }) {
 }
 
 export default function HomePage() {
-  const [reports,    setReports]    = useState([]);
+  // UX FIX: the map's pins previously came from the same `reports` array
+  // as the paginated card grid below it, meaning paginating the grid would
+  // have silently hidden pins for reports that are still active — a
+  // report on "page 2" of the list would vanish from the map entirely.
+  // The map now fetches ALL active reports (lightweight fields only) from
+  // the new, unpaginated GET /reports/map endpoint, completely decoupled
+  // from the card grid's pagination below.
+  const [mapReports, setMapReports] = useState([]);
+  const [mapLoading,  setMapLoading] = useState(true);
   const [heatPoints, setHeat]       = useState([]);
-  const [loading,    setLoading]    = useState(true);
-  const [filter,     setFilter]     = useState({ severity: '' });
+  const [severity,   setSeverity]   = useState('');
   const [showModal, setShowModal] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
   const KIGALI_CENTER = [-1.9441, 30.0619];
 
+  // Card grid below the map — paginated, respects the severity filter.
+  const {
+    reports, loading, pagination,
+    page, setPage, limit, setLimit,
+  } = usePaginatedReports(severity ? { severity } : {}, 12);
+
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchMapData = async () => {
       try {
-        const [reportsRes, heatRes] = await Promise.all([
-          api.get('/reports', { params: filter }),
+        const [mapRes, heatRes] = await Promise.all([
+          api.get('/reports/map'),
           api.get('/heatmap'),
         ]);
-        setReports(reportsRes.data);
+        setMapReports(mapRes.data);
         setHeat(heatRes.data.points);
       } catch (err) {
-        console.error('Failed to load:', err);
+        console.error('Failed to load map data:', err);
       } finally {
-        setLoading(false);
+        setMapLoading(false);
       }
     };
-    fetchData();
-  }, [filter]);
+    fetchMapData();
+  }, []);
+
+  const visibleMapReports = severity
+    ? mapReports.filter(r => String(r.severity) === severity)
+    : mapReports;
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6">
@@ -68,8 +87,8 @@ export default function HomePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <select value={filter.severity}
-            onChange={e => setFilter(f => ({ ...f, severity: e.target.value }))}
+          <select value={severity}
+            onChange={e => setSeverity(e.target.value)}
             className="border border-border rounded-lg px-3 py-2 text-sm bg-surface focus:outline-none focus:ring-2 focus:ring-primary">
             <option value="">All severities</option>
             <option value="4">Critical</option>
@@ -97,8 +116,9 @@ export default function HomePage() {
           {/* Heatmap canvas layer */}
           {heatPoints.length > 0 && <HeatmapLayer points={heatPoints} />}
 
-          {/* Invisible clickable markers on top of each report */}
-          {reports.map(report => (
+          {/* Invisible clickable markers on top of each report — ALL active
+              reports, independent of the card grid's current page */}
+          {!mapLoading && visibleMapReports.map(report => (
             <CircleMarker
               key={report.report_id}
               center={[report.latitude, report.longitude]}
@@ -128,13 +148,6 @@ export default function HomePage() {
                   <p className="font-semibold text-sm text-gray-900 mb-1 leading-snug">
                     {report.title}
                   </p>
-
-                  {/* Description preview */}
-                  {report.description && (
-                    <p className="text-xs text-gray-500 mb-2 line-clamp-2">
-                      {report.description}
-                    </p>
-                  )}
 
                   {/* Meta */}
                   <div className="flex items-center justify-between mb-3">
@@ -170,11 +183,11 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Report cards */}
+      {/* Report cards — paginated */}
       <h2 className="text-lg font-semibold text-text-main mb-4">
         All Reports
-        {reports.length > 0 && (
-          <span className="text-text-muted font-normal text-sm ml-2">({reports.length})</span>
+        {pagination.total > 0 && (
+          <span className="text-text-muted font-normal text-sm ml-2">({pagination.total})</span>
         )}
       </h2>
 
@@ -197,11 +210,22 @@ export default function HomePage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {reports.map(report => (
-            <ReportCard key={report.report_id} report={report} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {reports.map(report => (
+              <ReportCard key={report.report_id} report={report} />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+            pageSizeOptions={[12, 24, 48]}
+          />
+        </>
       )}
       {showModal && <ReportLoginModal onClose={() => setShowModal(false)} />}
     </div>

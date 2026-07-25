@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import StatusBadge from '../components/StatusBadge';
+import Pagination from '../components/Pagination';
+import usePaginatedReports from '../hooks/usePaginatedReports';
 
 const SEVERITY_LABELS = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
 const SEVERITY_COLORS = {
@@ -16,12 +18,24 @@ export default function OfficialDashboardPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [reports,    setReports]    = useState([]);
-  const [loading,    setLoading]    = useState(true);
   const [filters,    setFilters]    = useState({ category: '', severity: '', district: '', status: '' });
   const [categories, setCategories] = useState([]);
   const [districts,  setDistricts]  = useState([]);
   const [stats,      setStats]      = useState({ total: 0, received: 0, in_progress: 0, resolved: 0 });
+
+  // UX FIX: this list used to fetch every matching report in one
+  // unbounded request with no cap in the UI — the exact page an official
+  // needs most (triaging incoming reports) was also the most likely to get
+  // overcrowded. Now paginated via the shared hook; only non-empty filter
+  // values are passed through, and the hook resets to page 1 automatically
+  // whenever the filter set changes.
+  const activeFilters = Object.fromEntries(
+    Object.entries(filters).filter(([, v]) => v !== '')
+  );
+  const {
+    reports, loading, pagination,
+    page, setPage, limit, setLimit,
+  } = usePaginatedReports(activeFilters, 20);
 
   // Redirect non-officials away from this page
   useEffect(() => {
@@ -43,28 +57,18 @@ export default function OfficialDashboardPage() {
     });
   }, []);
 
-  // Reload reports whenever filters change
+  // True, unfiltered-by-status counts for the stat cards — see
+  // getReportStats in reportController.js. Independent of the paginated
+  // list above.
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true);
     const params = {};
     if (filters.category) params.category = filters.category;
-    if (filters.severity) params.severity = filters.severity;
     if (filters.district) params.district = filters.district;
-    if (filters.status)   params.status   = filters.status;
 
-    api.get('/reports', { params })
-      .then(res => {
-        setReports(res.data);
-        setStats({
-          total:       res.data.length,
-          received:    res.data.filter(r => r.status === 'received').length,
-          in_progress: res.data.filter(r => r.status === 'in_progress' || r.status === 'under_review').length,
-          resolved:    res.data.filter(r => r.status === 'resolved').length,
-        });
-      })
-      .finally(() => setLoading(false));
-  }, [filters]);
+    api.get('/reports/stats', { params })
+      .then(res => setStats(res.data))
+      .catch(() => {});
+  }, [filters.category, filters.district]);
 
   const formatDate = iso => new Date(iso).toLocaleDateString('en-RW', {
     day: 'numeric', month: 'short', year: 'numeric'
@@ -98,9 +102,14 @@ export default function OfficialDashboardPage() {
 
       {/* Filters */}
       <div className="bg-surface border border-border rounded-xl p-4 mb-6">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wide mb-3">
-          Filter Reports
-        </p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+            Filter Reports
+          </p>
+          {pagination.total > 0 && (
+            <p className="text-xs text-text-muted">{pagination.total} matching</p>
+          )}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
 
           {/* Status and Severity filters */}
@@ -203,43 +212,54 @@ export default function OfficialDashboardPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-3">
-          {reports.map(report => (
-            <div
-              key={report.report_id}
-              className="bg-surface border border-border rounded-xl p-4 hover:shadow-sm transition-shadow"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[report.severity]}`}>
-                      {SEVERITY_LABELS[report.severity]}
-                    </span>
-                    <span className="text-xs text-text-muted bg-bg border border-border px-2 py-0.5 rounded-full">
-                      {report.category_name}
-                    </span>
-                    <span className="text-xs text-text-muted">{report.district_name}</span>
+        <>
+          <div className="space-y-3">
+            {reports.map(report => (
+              <div
+                key={report.report_id}
+                className="bg-surface border border-border rounded-xl p-4 hover:shadow-sm transition-shadow"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${SEVERITY_COLORS[report.severity]}`}>
+                        {SEVERITY_LABELS[report.severity]}
+                      </span>
+                      <span className="text-xs text-text-muted bg-bg border border-border px-2 py-0.5 rounded-full">
+                        {report.category_name}
+                      </span>
+                      <span className="text-xs text-text-muted">{report.district_name}</span>
+                    </div>
+                    <h3 className="font-semibold text-text-main text-sm truncate">
+                      {report.title}
+                    </h3>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      Submitted by {report.submitted_by || report.submitter_name || 'Anonymous'} · {formatDate(report.created_at)}
+                    </p>
                   </div>
-                  <h3 className="font-semibold text-text-main text-sm truncate">
-                    {report.title}
-                  </h3>
-                  <p className="text-xs text-text-muted mt-0.5">
-                    Submitted by {report.submitted_by || report.submitter_name || 'Anonymous'} · {formatDate(report.created_at)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <StatusBadge status={report.status} />
-                  <Link
-                    to={`/reports/${report.report_id}`}
-                    className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dk transition-colors font-medium"
-                  >
-                    Manage →
-                  </Link>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <StatusBadge status={report.status} />
+                    <Link
+                      to={`/reports/${report.report_id}`}
+                      className="text-xs bg-primary text-white px-3 py-1.5 rounded-lg hover:bg-primary-dk transition-colors font-medium"
+                    >
+                      Manage →
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={pagination.totalPages}
+            total={pagination.total}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={setLimit}
+            pageSizeOptions={[10, 20, 50]}
+          />
+        </>
       )}
     </div>
   );

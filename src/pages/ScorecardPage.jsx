@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
 
@@ -55,6 +55,13 @@ export default function ScorecardPage() {
   const [data,    setData]    = useState([]);
   const [loading, setLoading] = useState(true);
   const [error,   setError]   = useState('');
+  // UX FIX: districts previously rendered in whatever order the API
+  // returned them, with no way to bring the best- or worst-performing
+  // district to the top. Only 3 districts exist today (Kigali), but this
+  // page is the one most likely to grow nationally, so sorting is added
+  // now rather than only pagination — with a small, fixed number of rows,
+  // sort + a compact/expanded toggle is more useful than paging.
+  const [sortBy, setSortBy] = useState('resolved_desc');
 
   useEffect(() => {
     api.get('/reports/scorecard')
@@ -62,6 +69,24 @@ export default function ScorecardPage() {
       .catch(() => setError('Could not load scorecard data.'))
       .finally(() => setLoading(false));
   }, []);
+
+  const sortedData = useMemo(() => {
+    const copy = [...data];
+    switch (sortBy) {
+      case 'resolved_desc':
+        return copy.sort((a, b) => parseFloat(b.resolved_pct || 0) - parseFloat(a.resolved_pct || 0));
+      case 'resolved_asc':
+        return copy.sort((a, b) => parseFloat(a.resolved_pct || 0) - parseFloat(b.resolved_pct || 0));
+      case 'acknowledged_desc':
+        return copy.sort((a, b) => parseFloat(b.acknowledged_pct || 0) - parseFloat(a.acknowledged_pct || 0));
+      case 'reports_desc':
+        return copy.sort((a, b) => parseInt(b.total_reports || 0) - parseInt(a.total_reports || 0));
+      case 'name_asc':
+        return copy.sort((a, b) => (a.district_name || '').localeCompare(b.district_name || ''));
+      default:
+        return copy;
+    }
+  }, [data, sortBy]);
 
   // Calculate overall totals for the summary row
   const totals = data.reduce((acc, d) => ({
@@ -134,6 +159,27 @@ export default function ScorecardPage() {
       )}
 
       {/* Scorecard table */}
+      {!loading && !error && data.length > 1 && (
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wide">
+            {data.length} district{data.length !== 1 ? 's' : ''}
+          </p>
+          <div className="flex items-center gap-2">
+            <label className="text-xs text-text-muted whitespace-nowrap">Sort by</label>
+            <select
+              value={sortBy}
+              onChange={e => setSortBy(e.target.value)}
+              className="border border-border rounded-lg px-2 py-1.5 text-xs bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="resolved_desc">Resolved % (high to low)</option>
+              <option value="resolved_asc">Resolved % (low to high)</option>
+              <option value="acknowledged_desc">Acknowledged % (high to low)</option>
+              <option value="reports_desc">Most reports</option>
+              <option value="name_asc">District name (A–Z)</option>
+            </select>
+          </div>
+        </div>
+      )}
       {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map(i => (
@@ -159,7 +205,7 @@ export default function ScorecardPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {data.map((district) => {
+          {sortedData.map((district) => {
             const { grade, color: gradeColor } = getGrade(district.resolved_pct);
             return (
               <div
