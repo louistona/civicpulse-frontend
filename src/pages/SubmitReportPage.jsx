@@ -1,11 +1,27 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
+import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import PhotoUploader from '../components/PhotoUploader';
 import PostSubmitAccountPrompt from '../components/PostSubmitAccountPrompt';
+
+// FIX: react-leaflet's default <Marker> icon is loaded from relative
+// image paths (images/marker-icon.png etc.) that Vite does not resolve
+// correctly out of the box — the marker was rendering broken/invisible
+// with no error thrown anywhere, so it was easy to miss. Rather than
+// patching Leaflet's default icon URLs (fragile, breaks again on the next
+// bundler upgrade), this defines a custom divIcon built from a plain
+// emoji glyph in an inline SVG-free <div> — no image asset loading
+// involved at all, so it can't break the same way again.
+const pinIcon = L.divIcon({
+  className: 'civicpulse-pin-icon',
+  html: `<div style="font-size:36px;line-height:1;transform:translateY(-4px);filter:drop-shadow(0 2px 2px rgba(0,0,0,0.35));">📍</div>`,
+  iconSize: [36, 36],
+  iconAnchor: [18, 34], // roughly the tip of the pin emoji, not its center
+});
 
 // Severity option definitions — label, description and selected border/bg colour
 const SEVERITY_OPTIONS = [
@@ -23,7 +39,7 @@ function LocationPicker({ onLocationSelect, selectedLocation }) {
     },
   });
   return selectedLocation
-    ? <Marker position={[selectedLocation.lat, selectedLocation.lng]} />
+    ? <Marker position={[selectedLocation.lat, selectedLocation.lng]} icon={pinIcon} />
     : null;
 }
 

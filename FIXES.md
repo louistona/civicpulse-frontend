@@ -138,3 +138,31 @@ several of these only make sense together with the matching backend change.
     officials, replacing them with the same style of explanatory message
     used in `VotePanel.jsx`. Vote counts and the revert-threshold progress
     bar remain visible.
+
+## 🔴 Critical regression found during your own testing
+
+16. **`CitizenAuthPage.jsx` never sent `verification_token` to
+    `/citizen/register`, causing every real signup to fail** with "Phone
+    verification is required before registering." This was a regression
+    from an earlier security fix in this conversation (backend
+    `FIXES.md` #8), which correctly made the backend *require* and verify
+    that token — but nothing updated this page to actually capture it from
+    the verify-otp response and forward it. It had been silently broken
+    since that fix; this is the first time it was actually exercised
+    end-to-end. Also fixed a related, smaller mismatch: this page still
+    checked for `next_step === 'home'` to auto-login an existing user with
+    a token, which the backend no longer ever sends (that was the OTP-only
+    login bypass, closed in the same earlier fix) — it now correctly
+    checks for `next_step === 'login'` and redirects to the PIN login form
+    instead.
+
+## 🟠 Follow-up: visible map pin
+
+17. **`SubmitReportPage.jsx`** — the map pin was invisible after clicking
+    the map. Cause: react-leaflet's default `<Marker>` icon loads from
+    relative image paths that Vite doesn't resolve correctly, so the icon
+    silently failed to render with no console error. Replaced with a
+    custom `L.divIcon` built from a 📍 emoji glyph — no image asset
+    loading involved, so it can't break the same way again. Checked the
+    rest of the app for the same pattern; `HomePage.jsx` uses
+    `CircleMarker` (a vector shape, not an icon), so it was never affected.
