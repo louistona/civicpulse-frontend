@@ -194,6 +194,11 @@ export default function OfficialAuthPage() {
                 />
               </div>
 
+              <p className="text-xs text-text-muted text-center">
+                By creating an account, you agree to our{' '}
+                <Link to="/privacy" className="text-primary hover:underline">Privacy Policy &amp; Terms of Use</Link>.
+              </p>
+
               <button type="submit" disabled={loading}
                 className="w-full bg-primary text-white font-semibold py-2.5 rounded-lg hover:bg-primary-dk transition-colors disabled:opacity-60">
                 {loading ? 'Creating account…' : 'Create Official Account'}

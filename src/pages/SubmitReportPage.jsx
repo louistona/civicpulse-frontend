@@ -400,7 +400,7 @@ export default function SubmitReportPage() {
                 ? 'Detecting area…'
                 : detection?.detected
                   ? `🎯 Detected: ${detection.cell_name} Cell, ${detection.sector_name} Sector, ${detection.district_name} (${detection.distance_km} km from cell centre)`
-                  : detection?.reason === 'no_centroids_seeded'
+                  : (detection?.reason === 'no_centroids_seeded' || detection?.reason === 'migration_missing')
                     ? '⚠️ Area detection isn\u2019t set up yet — your report will still be submitted, but nearby residents won\u2019t get an SMS about it.'
                     : '⚠️ Could not confidently detect an area for this pin — your report will still be submitted, but nearby residents may not be notified by SMS.'}
             </div>

@@ -166,3 +166,48 @@ several of these only make sense together with the matching backend change.
     loading involved, so it can't break the same way again. Checked the
     rest of the app for the same pattern; `HomePage.jsx` uses
     `CircleMarker` (a vector shape, not an icon), so it was never affected.
+
+## 🟠 Follow-up: matching frontend message for missing migration
+
+18. **`SubmitReportPage.jsx`** — the live location-detection preview now
+    shows the same "area detection isn't set up yet" message for the
+    `migration_missing` reason as it already did for
+    `no_centroids_seeded`, since both mean the same thing from a citizen's
+    perspective (nothing detected yet, report still submits fine).
+
+## 🟢 Added: Privacy Policy & Terms of Use page
+
+19. **New `pages/PrivacyPolicyPage.jsx`**, at route `/privacy`, restyled to
+    use the app's actual Tailwind tokens instead of a separate hardcoded
+    blue palette. Linked from a new `components/Footer.jsx` (didn't exist
+    before) on every page, and from both `CitizenAuthPage.jsx` and
+    `OfficialAuthPage.jsx` next to their signup buttons.
+
+    **Several claims in the source content were corrected to match what
+    the app actually does** — this mattered more than styling:
+    - Removed the claim that exact coordinates are "never exposed through
+      the public API" and that heatmap locations are "generalised to a
+      grid cell or ward-level centroid" — both false; the app publishes
+      exact pin coordinates by design (that's how the map and heatmap
+      work). Replaced with an honest explanation that location is public
+      by design, with a caution to citizens about where they pin.
+    - Removed the claim that photos are automatically stripped of EXIF/GPS
+      metadata on upload — not currently implemented. **Recommended,
+      separately, actually enabling this**: Cloudinary upload presets have
+      a "Strip Metadata" toggle in their console (Settings → Upload →
+      your unsigned preset) — flip that on and the claim becomes true with
+      zero code changes.
+    - Removed the claim that uploaded images are automatically screened for
+      identifiable bystanders/license plates — no such system exists.
+      Replaced with a plain request that reporters avoid including
+      identifiable third parties themselves.
+    - Softened "repeated bad-faith reporting may result in suspension" to
+      a reserved right rather than implying an active automated system,
+      since no suspension mechanism is currently built.
+    - Fixed the header/intro scoping "Gasabo District" → "Kigali City",
+      matching the actual three-district scope of the deployed app's data.
+    - Added a note that account creation is optional (anonymous reporting)
+      and what's collected differs in that case — the original didn't
+      mention this at all despite it being a major feature.
+    - Filled in Section 13, which was an unfinished sentence ("Any
+      material changes made need.").
