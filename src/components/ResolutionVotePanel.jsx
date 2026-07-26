@@ -1,11 +1,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function ResolutionVotePanel({ reportId, onReverted }) {
+  const { user } = useAuth();
   const [data,    setData]    = useState(null);
   const [loading, setLoading] = useState(true);
   const [voting,  setVoting]  = useState(false);
   const [message, setMessage] = useState('');
+
+  // Officials cannot vote on resolution status — extended to match the
+  // same block on severity voting (VotePanel.jsx). If anything the
+  // conflict of interest is sharper here: this vote confirms or disputes
+  // whether an official's own resolution actually fixed the issue.
+  const isOfficial = user?.role === 'official';
 
   // FIX: `fetch` was previously redefined on every render (a plain
   // function, not memoized) and included in its own effect's dependency
@@ -125,34 +133,43 @@ export default function ResolutionVotePanel({ reportId, onReverted }) {
         </div>
       )}
 
-      <div className="flex gap-3">
-        <button
-          onClick={() => vote('up')}
-          disabled={voting}
-          className={`flex-1 py-3 rounded-xl border-2 font-semibold text-sm transition-all
-            ${user_vote?.vote_type === 'up'
-              ? 'bg-green-500 border-green-500 text-white'
-              : 'border-border bg-bg hover:border-green-400 hover:text-green-700'}`}
-        >
-          ✅ Yes, it was fixed
-        </button>
-        <button
-          onClick={() => vote('down')}
-          disabled={voting}
-          className={`flex-1 py-3 rounded-xl border-2 font-semibold text-sm transition-all
-            ${user_vote?.vote_type === 'down'
-              ? 'bg-red-500 border-red-500 text-white'
-              : 'border-border bg-bg hover:border-red-400 hover:text-red-600'}`}
-        >
-          ❌ No, still a problem
-        </button>
-      </div>
+      {/* Vote buttons — hidden for officials */}
+      {isOfficial ? (
+        <div className="text-xs text-text-muted text-center bg-bg border border-border rounded-lg px-3 py-2.5">
+          🏛️ Official accounts cannot vote on resolution status
+        </div>
+      ) : (
+        <>
+          <div className="flex gap-3">
+            <button
+              onClick={() => vote('up')}
+              disabled={voting}
+              className={`flex-1 py-3 rounded-xl border-2 font-semibold text-sm transition-all
+                ${user_vote?.vote_type === 'up'
+                  ? 'bg-green-500 border-green-500 text-white'
+                  : 'border-border bg-bg hover:border-green-400 hover:text-green-700'}`}
+            >
+              ✅ Yes, it was fixed
+            </button>
+            <button
+              onClick={() => vote('down')}
+              disabled={voting}
+              className={`flex-1 py-3 rounded-xl border-2 font-semibold text-sm transition-all
+                ${user_vote?.vote_type === 'down'
+                  ? 'bg-red-500 border-red-500 text-white'
+                  : 'border-border bg-bg hover:border-red-400 hover:text-red-600'}`}
+            >
+              ❌ No, still a problem
+            </button>
+          </div>
 
-      <p className="text-xs text-text-muted text-center mt-2">
-        {user_vote
-          ? `You voted: ${user_vote.vote_type === 'up' ? 'Yes, fixed' : 'Not resolved'}`
-          : 'No account needed to vote · Registered users carry more weight'}
-      </p>
+          <p className="text-xs text-text-muted text-center mt-2">
+            {user_vote
+              ? `You voted: ${user_vote.vote_type === 'up' ? 'Yes, fixed' : 'Not resolved'}`
+              : 'No account needed to vote · Registered users carry more weight'}
+          </p>
+        </>
+      )}
     </div>
   );
 }

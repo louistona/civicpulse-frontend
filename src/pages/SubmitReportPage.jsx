@@ -4,7 +4,6 @@ import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import LocationSelector from '../components/LocationSelector';
 import PhotoUploader from '../components/PhotoUploader';
 import PostSubmitAccountPrompt from '../components/PostSubmitAccountPrompt';
 
@@ -43,13 +42,28 @@ export default function SubmitReportPage() {
   const [showAccountPrompt, setShowAccountPrompt] = useState(false);
   const [submittedReportId,  setSubmittedReportId]  = useState(null);
 
-  // ── Administrative location — managed by LocationSelector ─────────────────
-  // Captures district_id, sector_id, cell_id and village from the cascading
-  // dropdowns. All three IDs are sent to the API so SMS notifications (cell)
-  // and email notifications (sector) fire correctly.
-  const [location, setLocation] = useState({
-    district_id: '', sector_id: '', cell_id: '', village: '',
-  });
+  // ── Location detection ────────────────────────────────────────────────────
+  // UX CHANGE: district/sector/cell are no longer chosen from cascading
+  // dropdowns. The citizen just drops a pin; the backend detects the
+  // nearest cell (and its parent sector/district) from that pin — see
+  // GET /reports/detect-location and services/geoDetection.js. This state
+  // just holds a *preview* of that detection so the citizen has some
+  // confirmation before submitting; the actual detection that decides
+  // where notifications go happens again, authoritatively, server-side
+  // inside POST /reports at submit time.
+  const [detection, setDetection] = useState(null); // { detected, ...} | null
+  const [detecting, setDetecting] = useState(false);
+
+  useEffect(() => {
+    if (!mapLocation) { setDetection(null); return; }
+    let cancelled = false;
+    setDetecting(true);
+    api.get('/reports/detect-location', { params: { lat: mapLocation.lat, lng: mapLocation.lng } })
+      .then(res => { if (!cancelled) setDetection(res.data); })
+      .catch(() => { if (!cancelled) setDetection({ detected: false, reason: 'lookup_failed' }); })
+      .finally(() => { if (!cancelled) setDetecting(false); });
+    return () => { cancelled = true; };
+  }, [mapLocation]);
 
   // ── Photo upload state ────────────────────────────────────────────────────
   // photoUrl: the Cloudinary secure URL returned after a successful upload.
@@ -69,7 +83,6 @@ export default function SubmitReportPage() {
 
   const KIGALI_CENTER = [-1.9441, 30.0619];
 
-  // Load categories on mount — districts/sectors/cells loaded by LocationSelector
   useEffect(() => {
     api.get('/reports/categories')
       .then(res => setCategories(res.data))
@@ -81,9 +94,6 @@ export default function SubmitReportPage() {
     const errors = {};
     if (!title.trim())         errors.title       = 'Title is required';
     if (!categoryId)           errors.categoryId  = 'Please select a category';
-    if (!location.district_id) errors.district_id = 'Please select a district';
-    if (!location.sector_id)   errors.sector_id   = 'Please select a sector';
-    if (!location.cell_id)     errors.cell_id     = 'Please select a cell';
     if (!severity)             errors.severity    = 'Please select a severity level';
     // Photo is mandatory — citizens cannot submit without photographic evidence
     if (!photoUrl)             errors.photoUrl    = 'A photo is required — please upload one before submitting';
@@ -92,18 +102,6 @@ export default function SubmitReportPage() {
   };
 
   // ── Form submission ───────────────────────────────────────────────────────
-  // FIX: this used to POST /reports first, then — only if that succeeded —
-  // separately POST /photos/:id/submission. If the second call failed (bad
-  // network, or CLOUDINARY_CLOUD_NAME mismatch between frontend/backend
-  // env vars), the whole function fell into the catch block and showed
-  // "Submission failed. Please try again." even though the report had
-  // ALREADY been created — so a retry created a duplicate report, and the
-  // original was left with no photo attached to report_photos (silently
-  // broken photo display, since the detail page only reads from
-  // report_photos, not reports.photo_url). The backend's POST /reports now
-  // accepts photo_url directly and writes both rows in a single database
-  // transaction (see createReport in reportController.js), so this is now
-  // one request instead of two, and either fully succeeds or fully fails.
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
@@ -115,10 +113,6 @@ export default function SubmitReportPage() {
       title:             title.trim(),
       description:       description.trim(),
       category_id:       parseInt(categoryId),
-      district_id:       parseInt(location.district_id),
-      sector_id:         parseInt(location.sector_id),
-      cell_id:           parseInt(location.cell_id),
-      village:           location.village || null,
       severity,
       latitude:          mapLocation.lat,
       longitude:         mapLocation.lng,
@@ -164,9 +158,13 @@ export default function SubmitReportPage() {
         Report an Infrastructure Issue
       </h1>
 
-      {/* Signed-in user greeting — replaces the old misleading "No account needed" text */}
+      {/* FIX: this line previously always read "Signed in as {user?.name}",
+          which showed "Signed in as ." for anonymous submitters now that
+          this page no longer requires an account. */}
       <p className="text-text-muted text-sm mb-6">
-        Signed in as <strong>{user?.name}</strong>. Your report goes directly to the district office.
+        {user
+          ? <>Signed in as <strong>{user.name}</strong>. Your report goes directly to the district office.</>
+          : 'Reporting without an account. Your report is still fully public and goes directly to the district office.'}
       </p>
 
       {/* Global error banner */}
@@ -237,30 +235,7 @@ export default function SubmitReportPage() {
           </div>
         </div>
 
-        {/* ── Section 2: Administrative Location ──────────────────────────── */}
-        {/* LocationSelector handles the cascading district → sector → cell → village
-            dropdowns. It captures all three IDs needed for notifications to work:
-            - cell_id   → used to find users in the same cell for SMS vote notifications
-            - sector_id → used to find officials in the same sector for email alerts */}
-        <div className="bg-surface border border-border rounded-xl p-6">
-          <h2 className="font-semibold text-text-main mb-1">Administrative Location</h2>
-          <p className="text-text-muted text-xs mb-4">
-            Select where the issue is located. This determines which officials are
-            notified and which community members receive a vote request by SMS.
-          </p>
-          <LocationSelector
-            onChange={(loc) => {
-              setLocation(loc);
-              clearError('district_id');
-              clearError('sector_id');
-              clearError('cell_id');
-            }}
-            errors={fieldErrors}
-            clearError={clearError}
-          />
-        </div>
-
-        {/* ── Section 3: Optional Identity ────────────────────────────────── */}
+        {/* ── Section 2: Optional Identity ────────────────────────────────── */}
         {/* Only shown when not logged in. Logged-in users already have their
             name attached to the account so this section is redundant for them. */}
         {!user && (
@@ -304,7 +279,7 @@ export default function SubmitReportPage() {
           </div>
         )}
 
-        {/* ── Section 4: Severity Level ────────────────────────────────────── */}
+        {/* ── Section 3: Severity Level ────────────────────────────────────── */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <h2 className="font-semibold text-text-main mb-1">
             Severity Level <span className="text-danger">*</span>
@@ -334,16 +309,7 @@ export default function SubmitReportPage() {
           </div>
         </div>
 
-        {/* ── Section 5: Photo Evidence (required) ────────────────────────── */}
-        {/* Photo is mandatory — validate() blocks submission if photoUrl is null.
-            Upload flow:
-              1. User drags/drops or clicks to select an image file
-              2. PhotoUploader sends the file directly to Cloudinary via XHR
-              3. Cloudinary returns a secure_url
-              4. onUploadComplete sets photoUrl with that URL
-              5. On form submit, photoUrl is included directly in the POST /api/reports
-                 body; the backend inserts the report_photos row in the same DB
-                 transaction as the report (see createReport in reportController.js) */}
+        {/* ── Section 4: Photo Evidence (required) ────────────────────────── */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <h2 className="font-semibold text-text-main mb-1">
             Photo Evidence <span className="text-danger">*</span>
@@ -371,14 +337,23 @@ export default function SubmitReportPage() {
           )}
         </div>
 
-        {/* ── Section 6: Map Pin (exact location) ─────────────────────────── */}
+        {/* ── Section 5: Map Pin (exact location — also determines area) ──── */}
+        {/* UX CHANGE: this section used to be paired with a separate
+            "Administrative Location" section containing cascading
+            district → sector → cell → village dropdowns. That's gone —
+            dropping the pin here is now the ONLY location input. The
+            backend detects the nearest cell from these coordinates (see
+            GET /reports/detect-location, called below as a live preview,
+            and re-run authoritatively inside POST /reports at submit
+            time). */}
         <div className="bg-surface border border-border rounded-xl p-6">
           <h2 className="font-semibold text-text-main mb-1">
-            Exact Location <span className="text-danger">*</span>
+            Location <span className="text-danger">*</span>
           </h2>
           <p className="text-text-muted text-xs mb-3">
             Click the map to drop a pin at the exact location of the issue. Zoom in
-            for a more precise placement. Click again to move the pin.
+            for a more precise placement. Click again to move the pin. We'll
+            automatically detect which cell it's in.
           </p>
 
           {fieldErrors.mapLocation && (
@@ -386,7 +361,7 @@ export default function SubmitReportPage() {
           )}
 
           {/* Coordinate display — green when pin has been placed */}
-          <div className={`mb-3 text-xs px-3 py-2 rounded-lg font-medium
+          <div className={`mb-2 text-xs px-3 py-2 rounded-lg font-medium
             ${mapLocation
               ? 'bg-green-50 border border-green-200 text-green-700'
               : 'bg-bg border border-border text-text-muted'}`}
@@ -395,6 +370,25 @@ export default function SubmitReportPage() {
               ? `📍 ${mapLocation.lat.toFixed(5)}, ${mapLocation.lng.toFixed(5)}`
               : '📍 No location selected — click the map below'}
           </div>
+
+          {/* Live detected-area feedback */}
+          {mapLocation && (
+            <div className={`mb-3 text-xs px-3 py-2 rounded-lg font-medium
+              ${detecting
+                ? 'bg-bg border border-border text-text-muted'
+                : detection?.detected
+                  ? 'bg-blue-50 border border-blue-200 text-blue-700'
+                  : 'bg-amber-50 border border-amber-200 text-amber-700'}`}
+            >
+              {detecting
+                ? 'Detecting area…'
+                : detection?.detected
+                  ? `🎯 Detected: ${detection.cell_name} Cell, ${detection.sector_name} Sector, ${detection.district_name} (${detection.distance_km} km from cell centre)`
+                  : detection?.reason === 'no_centroids_seeded'
+                    ? '⚠️ Area detection isn\u2019t set up yet — your report will still be submitted, but nearby residents won\u2019t get an SMS about it.'
+                    : '⚠️ Could not confidently detect an area for this pin — your report will still be submitted, but nearby residents may not be notified by SMS.'}
+            </div>
+          )}
 
           {/* Map — red border when validation fails, normal border otherwise */}
           <div className={`rounded-xl overflow-hidden border-2

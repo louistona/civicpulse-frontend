@@ -89,3 +89,52 @@ several of these only make sense together with the matching backend change.
    the platform expands beyond Kigali, so sorting was added now rather
    than leaving districts in whatever order the API happened to return
    them.
+
+## 🟠 Found during full re-verification pass (this round)
+
+10. **`HomePage.jsx`** — the heat layer is now refetched from
+    `GET /heatmap?severity=X` whenever the severity dropdown changes,
+    matching the pin/grid filtering that already worked. Split into two
+    effects (map pins fetched once; heat layer refetched on filter change)
+    so the lightweight, filter-independent pins endpoint isn't re-hit on
+    every filter change.
+
+## 🟢 Major feature changes (this round)
+
+11. **`App.jsx`** — removed the `PrivateRoute` wrapper from `/submit`. This
+    was the actual root cause of anonymous reporting not working: even
+    though the backend and `SubmitReportPage.jsx` were both already built
+    to accept submissions with no account, the route itself redirected any
+    logged-out visitor straight to `/auth/citizen` before the form ever
+    rendered.
+
+12. **`ReportLoginModal.jsx`** — rewritten. Previously titled "Sign in to
+    Report" with copy stating an account was required (false), and its
+    "Continue browsing without an account" button only closed the modal —
+    it never navigated anywhere, so there was no way to actually reach the
+    form without an account even by dismissing it. Now frames both paths
+    as equally valid choices, and the anonymous option actually navigates
+    to `/submit`.
+
+13. **`SubmitReportPage.jsx`** — removed the `LocationSelector`
+    (district/sector/cell/village cascading dropdowns) entirely. The only
+    location input now is the map pin; a live "🎯 Detected: X Cell, Y
+    Sector, Z District" preview appears under the pin via the new
+    `GET /reports/detect-location` endpoint as soon as it's dropped, with
+    a clear amber warning if detection isn't available yet (centroids not
+    backfilled) rather than silently failing. Also fixed the header text,
+    which previously always rendered "Signed in as {user?.name}" —
+    literally "Signed in as ." for an anonymous visitor now that this page
+    doesn't require login.
+
+14. **`VotePanel.jsx`** — hides the severity vote buttons for logged-in
+    officials, replacing them with a short explanation, matching the new
+    backend restriction. Officials can still see vote counts, engagement
+    rate, and severity index — just can't cast a vote.
+
+## 🟢 Follow-up: extend official block to resolution voting
+
+15. **`ResolutionVotePanel.jsx`** — hides the confirm/dispute buttons for
+    officials, replacing them with the same style of explanatory message
+    used in `VotePanel.jsx`. Vote counts and the revert-threshold progress
+    bar remain visible.

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const SEVERITY_LABELS  = { 1: 'Low', 2: 'Medium', 3: 'High', 4: 'Critical' };
 const SEVERITY_COLORS  = {
@@ -10,6 +11,7 @@ const SEVERITY_COLORS  = {
 };
 
 export default function VotePanel({ reportId, reportStatus }) {
+  const { user } = useAuth();
   const [summary,      setSummary]      = useState(null);
   const [loading,      setLoading]      = useState(true);
   const [voting,       setVoting]       = useState(false);
@@ -17,6 +19,12 @@ export default function VotePanel({ reportId, reportStatus }) {
   const [voteSuccess,  setVoteSuccess]  = useState('');
 
   const isClosed = reportStatus === 'resolved';
+  // Officials cannot cast severity votes — see the backend block in
+  // voteController.js for why (conflict of interest: officials manage the
+  // response, so they shouldn't also influence the metric that holds
+  // their office accountable). They can still see everything below —
+  // this only affects whether the vote buttons render.
+  const isOfficial = user?.role === 'official';
 
   const fetchSummary = async () => {
     try {
@@ -84,7 +92,9 @@ export default function VotePanel({ reportId, reportStatus }) {
       <p className="text-text-muted text-xs mb-4">
         {isClosed
           ? 'Voting is closed — this report has been resolved.'
-          : 'Vote to indicate how serious this infrastructure issue is in your experience.'}
+          : isOfficial
+            ? 'Severity is verified by the community. As an official, you can view these results but cannot vote — this keeps the metric independent of the office it holds accountable.'
+            : 'Vote to indicate how serious this infrastructure issue is in your experience.'}
       </p>
 
       {/* Current severity */}
@@ -135,8 +145,13 @@ export default function VotePanel({ reportId, reportStatus }) {
         </div>
       )}
 
-      {/* Vote buttons */}
-      {!isClosed && (
+      {/* Vote buttons — hidden for officials */}
+      {!isClosed && isOfficial && (
+        <div className="text-xs text-text-muted text-center bg-bg border border-border rounded-lg px-3 py-2.5">
+          🏛️ Official accounts cannot vote on severity
+        </div>
+      )}
+      {!isClosed && !isOfficial && (
         <>
           {voteError && (
             <div className="text-danger text-xs mb-3 bg-red-50 border border-red-200 rounded-lg px-3 py-2">

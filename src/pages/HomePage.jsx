@@ -53,23 +53,25 @@ export default function HomePage() {
     page, setPage, limit, setLimit,
   } = usePaginatedReports(severity ? { severity } : {}, 12);
 
+  // Map pins — fetched once; filtered client-side by severity below
+  // (dataset is small enough that this is cheap, and avoids an extra
+  // network round-trip on every filter change).
   useEffect(() => {
-    const fetchMapData = async () => {
-      try {
-        const [mapRes, heatRes] = await Promise.all([
-          api.get('/reports/map'),
-          api.get('/heatmap'),
-        ]);
-        setMapReports(mapRes.data);
-        setHeat(heatRes.data.points);
-      } catch (err) {
-        console.error('Failed to load map data:', err);
-      } finally {
-        setMapLoading(false);
-      }
-    };
-    fetchMapData();
+    api.get('/reports/map')
+      .then(res => setMapReports(res.data))
+      .catch(err => console.error('Failed to load map pins:', err))
+      .finally(() => setMapLoading(false));
   }, []);
+
+  // Heat layer — refetched whenever the severity filter changes.
+  // FIX: previously never received the severity filter at all, so
+  // selecting e.g. "Critical only" narrowed the pins and card grid but
+  // left the heat gradient itself showing every active report's weight.
+  useEffect(() => {
+    api.get('/heatmap', { params: severity ? { severity } : {} })
+      .then(res => setHeat(res.data.points))
+      .catch(err => console.error('Failed to load heatmap:', err));
+  }, [severity]);
 
   const visibleMapReports = severity
     ? mapReports.filter(r => String(r.severity) === severity)
