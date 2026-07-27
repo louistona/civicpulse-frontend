@@ -211,3 +211,12 @@ several of these only make sense together with the matching backend change.
       mention this at all despite it being a major feature.
     - Filled in Section 13, which was an unfinished sentence ("Any
       material changes made need.").
+
+## 🟢 Added: account page (account deletion, my reports, report deletion)
+
+20. **New `pages/AccountPage.jsx`** at `/account`, linked from the navbar
+    for any logged-in user. Shows account details, a list of the user's
+    own submitted reports with a delete button on any still in "Received"
+    status, and a "Danger zone" section for account deletion — which
+    requires re-entering the PIN/password plus typing "DELETE" to confirm,
+    given it's irreversible.

@@ -56,6 +56,13 @@ export default function Navbar() {
               {user.name} · <span className="capitalize">{user.role}</span>
             </span>
 
+            <Link
+              to="/account"
+              className="text-text-muted hover:text-primary transition-colors"
+            >
+              My Account
+            </Link>
+
             <button
               onClick={handleLogout}
               className="bg-bg border border-border text-text-main px-3 py-1.5 rounded-lg hover:border-danger hover:text-danger transition-colors"

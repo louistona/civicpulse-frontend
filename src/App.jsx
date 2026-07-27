@@ -13,6 +13,7 @@ import VotingPage         from './pages/VotingPage';
 import NotFoundPage       from './pages/NotFoundPage';
 import ResolvedReportsPage from './pages/ResolvedReportsPage';
 import PrivacyPolicyPage  from './pages/PrivacyPolicyPage';
+import AccountPage        from './pages/AccountPage';
 
 const PrivateRoute = ({ children, requiredRole }) => {
   const { user, loading } = useAuth();
@@ -51,6 +52,15 @@ export default function App() {
                   an account. It's now a public route; SubmitReportPage handles
                   both logged-in and anonymous submitters itself. */}
               <Route path="/submit"         element={<SubmitReportPage />} />
+
+              {/* Any logged-in user — citizen or official */}
+              <Route path="/account"
+                element={
+                  <PrivateRoute>
+                    <AccountPage />
+                  </PrivateRoute>
+                }
+              />
 
               {/* Official protected */}
               <Route path="/dashboard"
