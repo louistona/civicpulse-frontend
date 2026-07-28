@@ -117,7 +117,7 @@ export default function AccountPage() {
       <div className="bg-surface border border-border rounded-xl p-5 mb-6">
         <h2 className="font-semibold text-text-main mb-1 text-sm">My reports</h2>
         <p className="text-text-muted text-xs mb-4">
-          Reports you can delete are still marked "Received" — once an official has started
+          Reports you can delete are still marked "Received"; once an official has started
           responding, the report becomes part of the public accountability record and can no
           longer be removed.
         </p>

@@ -59,7 +59,7 @@ export default function ScorecardPage() {
   // returned them, with no way to bring the best- or worst-performing
   // district to the top. Only 3 districts exist today (Kigali), but this
   // page is the one most likely to grow nationally, so sorting is added
-  // now rather than only pagination — with a small, fixed number of rows,
+  // now rather than only pagination with a small, fixed number of rows,
   // sort + a compact/expanded toggle is more useful than paging.
   const [sortBy, setSortBy] = useState('resolved_desc');
 
@@ -263,11 +263,11 @@ export default function ScorecardPage() {
           Methodology
         </p>
         <p className="text-xs text-text-muted leading-relaxed">
-          <strong className="text-text-main">Acknowledged %</strong> — the share of reports that have
+          <strong className="text-text-main">Acknowledged %</strong> the share of reports that have
           received at least one official status update beyond "received." &nbsp;
-          <strong className="text-text-main">Resolved %</strong> — the share of reports marked as
+          <strong className="text-text-main">Resolved %</strong> the share of reports marked as
           fully resolved. &nbsp;
-          <strong className="text-text-main">Average response time</strong> — median days between
+          <strong className="text-text-main">Average response time</strong> median days between
           report submission and the first official action. Grades are assigned based on resolved
           percentage: A ≥ 75%, B ≥ 50%, C ≥ 25%, D &gt; 0%, F = no resolutions.
           Data is live and updates whenever an official acts on a report.

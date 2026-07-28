@@ -65,7 +65,7 @@ export default function ReportDetailPage() {
     e.preventDefault();
     setUpdating(true);
     try {
-      // Step 1 — update the report status and get the new status_update row's ID
+      // Step 1 update the report status and get the new status_update row's ID
       const statusRes = await api.patch(`/reports/${id}/status`, {
         new_status: newStatus,
         message,
@@ -73,9 +73,9 @@ export default function ReportDetailPage() {
 
       const newUpdateId = statusRes.data.update_id;
 
-      // Step 2 — if the status is being set to resolved and the official
+      // Step 2 if the status is being set to resolved and the official
       // uploaded a resolution photo, save it and link it to this status update.
-      // The photo was already uploaded to Cloudinary during the upload step —
+      // The photo was already uploaded to Cloudinary during the upload step
       // this call only saves the URL reference and links it to the timeline entry.
       if (newStatus === 'resolved' && resolutionPhotoUrl) {
         await api.post(`/photos/${id}/resolution`, {
@@ -87,7 +87,7 @@ export default function ReportDetailPage() {
         });
       }
 
-      // Step 3 — re-fetch the full report so photos, timeline and status
+      // Step 3 re-fetch the full report so photos, timeline and status
       // badge all update in one operation without a page reload
       const res = await api.get(`/reports/${id}`);
       setReport(res.data);
@@ -117,7 +117,7 @@ export default function ReportDetailPage() {
     </div>
   );
 
-  // active_severity is aliased as severity by the API — this covers both the
+  // active_severity is aliased as severity by the API, this covers both the
   // community-voted severity and the citizen's initial severity automatically
   const displaySeverity = report.severity
     || report.active_severity
@@ -141,8 +141,8 @@ export default function ReportDetailPage() {
         <div>
 
           {/* ReportPhotos renders two clearly labelled sections:
-                "Reported Condition"  — submission photos (the problem evidence)
-                "Resolution Evidence" — resolution photos (proof of fix)
+                "Reported Condition"  submission photos (the problem evidence)
+                "Resolution Evidence" resolution photos (proof of fix)
               Each photo is clickable and opens a full-screen lightbox.
               If there are no photos at all, a placeholder message is shown.
               If the report is resolved and has both photo types, a green
@@ -152,7 +152,7 @@ export default function ReportDetailPage() {
             reportStatus={report.status}
           />
 
-          {/* Report title and description — below the photos */}
+          {/* Report title and description below the photos */}
           <h1 className="text-xl font-bold text-text-main mt-4 mb-2">
             {report.title}
           </h1>
@@ -170,7 +170,7 @@ export default function ReportDetailPage() {
             </p>
           </div>
 
-          {/* Severity source indicator — shows whether severity is community-verified */}
+          {/* Severity source indicator shows whether severity is community-verified */}
           {report.severity_source && (
             <div className={`mt-3 text-xs px-3 py-2 rounded-lg inline-flex items-center gap-1.5
               ${report.severity_source === 'community'
@@ -220,7 +220,7 @@ export default function ReportDetailPage() {
               <StatusBadge status={report.status} />
             </div>
 
-            {/* Vote quick summary — shown once any votes exist */}
+            {/* Vote quick summary shown once any votes exist */}
             {report.vote_total > 0 && (
               <div className="flex justify-between text-sm items-center pt-1 border-t border-border">
                 <span className="text-text-muted">Community votes</span>
@@ -240,7 +240,7 @@ export default function ReportDetailPage() {
                 const isPast = update != null;
                 return (
                   <div key={s} className="flex items-start gap-3">
-                    {/* Timeline dot — filled green for past statuses */}
+                    {/* Timeline dot filled green for past statuses */}
                     <div className={`w-3 h-3 rounded-full mt-0.5 flex-shrink-0 border-2
                       ${isPast
                         ? 'bg-primary border-primary'
@@ -300,7 +300,7 @@ export default function ReportDetailPage() {
             </div>
           </div>
 
-          {/* Community vote panel — sits as its own card OUTSIDE the timeline.
+          {/* Community vote panel sits as its own card OUTSIDE the timeline.
               Previously it was nested inside the timeline's closing </div> which
               caused it to render as a child element of the timeline panel with
               no visual separation. It is now a proper sibling card. */}
@@ -317,7 +317,7 @@ export default function ReportDetailPage() {
             <VotePanel reportId={id} reportStatus={report.status} />
           )}
 
-          {/* Official status update form — only visible to government officials */}
+          {/* Official status update form only visible to government officials */}
           {user?.role === 'official' && (
             <div className="bg-surface border border-primary/30 rounded-xl p-5">
               <h2 className="font-semibold text-text-main mb-4 text-sm">Update Status</h2>
@@ -345,7 +345,7 @@ export default function ReportDetailPage() {
                   className="w-full border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
                 />
 
-                {/* Resolution photo upload section — only shown when the official
+                {/* Resolution photo upload section only shown when the official
                     selects "resolved" from the dropdown. Uploading a photo is
                     optional but strongly encouraged as proof of resolution.
                     Upload flow mirrors the citizen submission flow:
@@ -359,7 +359,7 @@ export default function ReportDetailPage() {
                     <p className="text-xs font-medium text-text-main">
                       📷 Resolution Photo
                       <span className="text-text-muted font-normal ml-1">
-                        — upload proof that the issue has been fixed (optional but recommended)
+                        ; upload proof that the issue has been fixed (optional but recommended)
                       </span>
                     </p>
                     <PhotoUploader
@@ -375,7 +375,7 @@ export default function ReportDetailPage() {
                   </div>
                 )}
 
-                {/* Save button — disabled while photo uploading or API call running */}
+                {/* Save button disabled while photo uploading or API call running */}
                 <button
                   type="submit"
                   disabled={updating || resolutionPhotoUploading}

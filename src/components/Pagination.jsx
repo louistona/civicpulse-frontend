@@ -2,7 +2,7 @@
  * Reusable pagination bar: prev/next, numbered pages (with ellipsis for
  * large page counts), a "showing X–Y of N" summary, and a page-size
  * selector. Used by HomePage, ResolvedReportsPage, and
- * OfficialDashboardPage — anywhere a list is fetched from a paginated
+ * OfficialDashboardPage, anywhere a list is fetched from a paginated
  * backend endpoint that returns { data, pagination: { page, limit, total,
  * totalPages } }.
  *

@@ -132,7 +132,7 @@ export default function AuthPage() {
               />
             </div>
 
-            {/* Role selector — signup only */}
+            {/* Role selector signup only */}
             {mode === 'signup' && (
               <div>
                 <label className="block text-sm font-medium text-text-main mb-1">

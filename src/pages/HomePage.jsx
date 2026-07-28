@@ -33,7 +33,7 @@ function HeatmapLayer({ points }) {
 export default function HomePage() {
   // UX FIX: the map's pins previously came from the same `reports` array
   // as the paginated card grid below it, meaning paginating the grid would
-  // have silently hidden pins for reports that are still active — a
+  // have silently hidden pins for reports that are still active a
   // report on "page 2" of the list would vanish from the map entirely.
   // The map now fetches ALL active reports (lightweight fields only) from
   // the new, unpaginated GET /reports/map endpoint, completely decoupled
@@ -47,13 +47,13 @@ export default function HomePage() {
   const navigate = useNavigate();
   const KIGALI_CENTER = [-1.9441, 30.0619];
 
-  // Card grid below the map — paginated, respects the severity filter.
+  // Card grid below the map paginated, respects the severity filter.
   const {
     reports, loading, pagination,
     page, setPage, limit, setLimit,
   } = usePaginatedReports(severity ? { severity } : {}, 12);
 
-  // Map pins — fetched once; filtered client-side by severity below
+  // Map pins fetched once; filtered client-side by severity below
   // (dataset is small enough that this is cheap, and avoids an extra
   // network round-trip on every filter change).
   useEffect(() => {
@@ -63,11 +63,8 @@ export default function HomePage() {
       .finally(() => setMapLoading(false));
   }, []);
 
-  // Heat layer — refetched whenever the severity filter changes.
-  // FIX: previously never received the severity filter at all, so
-  // selecting e.g. "Critical only" narrowed the pins and card grid but
-  // left the heat gradient itself showing every active report's weight.
-  useEffect(() => {
+  // Heat layer refetched whenever the severity filter changes.
+    useEffect(() => {
     api.get('/heatmap', { params: severity ? { severity } : {} })
       .then(res => setHeat(res.data.points))
       .catch(err => console.error('Failed to load heatmap:', err));
@@ -118,7 +115,7 @@ export default function HomePage() {
           {/* Heatmap canvas layer */}
           {heatPoints.length > 0 && <HeatmapLayer points={heatPoints} />}
 
-          {/* Invisible clickable markers on top of each report — ALL active
+          {/* Invisible clickable markers on top of each report. ALL active
               reports, independent of the card grid's current page */}
           {!mapLoading && visibleMapReports.map(report => (
             <CircleMarker
@@ -128,7 +125,7 @@ export default function HomePage() {
               pathOptions={{
                 color: SEVERITY_COLORS[report.severity],
                 fillColor: SEVERITY_COLORS[report.severity],
-                fillOpacity: 0,   // invisible — heatmap shows instead
+                fillOpacity: 0,   // invisible; heatmap shows instead
                 opacity: 0,       // invisible border too
                 weight: 0,
               }}
@@ -185,7 +182,7 @@ export default function HomePage() {
         ))}
       </div>
 
-      {/* Report cards — paginated */}
+      {/* Report cards paginated */}
       <h2 className="text-lg font-semibold text-text-main mb-4">
         All Reports
         {pagination.total > 0 && (

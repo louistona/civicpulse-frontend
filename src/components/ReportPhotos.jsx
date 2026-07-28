@@ -99,7 +99,7 @@ export default function ReportPhotos({ photos, reportStatus }) {
               </span>
               {hasResolution && (
                 <span className="text-xs bg-green-100 text-green-700 border border-green-200 px-2 py-0.5 rounded-full font-medium">
-                  Proof of fix
+                  Proof of Resolution
                 </span>
               )}
             </div>
@@ -122,7 +122,7 @@ export default function ReportPhotos({ photos, reportStatus }) {
           </div>
         )}
 
-        {/* ── Before/After banner — only for fully resolved reports with both ── */}
+        {/* Before/After banner, only for fully resolved reports with both */}
         {isResolved && hasSubmission && hasResolution && (
           <div className="bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-center">
             <p className="text-green-700 text-xs font-medium">

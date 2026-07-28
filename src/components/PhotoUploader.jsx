@@ -62,7 +62,7 @@ export default function PhotoUploader({
       setUploaded(true);
       setProgress(100);
     } catch (err) {
-      setError(err.message || 'Upload failed — please try again');
+      setError(err.message || 'Upload failed! please try again');
       setPreview(existingUrl || null);
       setUploaded(false);
       onUploadComplete(null);

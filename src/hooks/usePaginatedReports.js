@@ -10,7 +10,7 @@ import api from '../services/api';
  * `extraParams` (e.g. { severity, category, district, status,
  * resolved_only }) are merged into the query string. The page resets to 1
  * automatically whenever extraParams changes (e.g. the user picks a new
- * filter) — otherwise you could land on "page 4" of a filtered set that
+ * filter), otherwise you could land on "page 4" of a filtered set that
  * only has 1 page, which would silently render nothing.
  */
 export default function usePaginatedReports(extraParams = {}, initialLimit = 24) {
@@ -36,6 +36,7 @@ export default function usePaginatedReports(extraParams = {}, initialLimit = 24)
 
   useEffect(() => {
     let cancelled = false;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
     api.get('/reports', { params: { ...extraParams, page, limit } })

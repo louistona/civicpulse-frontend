@@ -43,9 +43,9 @@ export default function App() {
               <Route path="/vote/:id"       element={<VotingPage />} />
               <Route path="/resolved" element={<ResolvedReportsPage />} />
               <Route path="/privacy"        element={<PrivacyPolicyPage />} />
-              {/* FIX: /submit was wrapped in <PrivateRoute requiredRole="citizen">,
+              {/* /submit was wrapped in <PrivateRoute requiredRole="citizen">,
                   which redirected every logged-out visitor to /auth/citizen
-                  before they could ever see the form — completely blocking
+                  before they could ever see the form hence completely blocking
                   anonymous reporting at the routing layer, even though the
                   backend (optionalAuth on POST /reports) and SubmitReportPage
                   itself were both already built to support submitting without
@@ -53,7 +53,7 @@ export default function App() {
                   both logged-in and anonymous submitters itself. */}
               <Route path="/submit"         element={<SubmitReportPage />} />
 
-              {/* Any logged-in user — citizen or official */}
+              {/* Any logged-in user (citizen or official) */}
               <Route path="/account"
                 element={
                   <PrivateRoute>

@@ -8,13 +8,13 @@ import { useAuth } from '../context/AuthContext';
 import PhotoUploader from '../components/PhotoUploader';
 import PostSubmitAccountPrompt from '../components/PostSubmitAccountPrompt';
 
-// FIX: react-leaflet's default <Marker> icon is loaded from relative
+// UI FIX: react-leaflet's default <Marker> icon is loaded from relative
 // image paths (images/marker-icon.png etc.) that Vite does not resolve
-// correctly out of the box — the marker was rendering broken/invisible
+// correctly out of the box, the marker was rendering broken/invisible
 // with no error thrown anywhere, so it was easy to miss. Rather than
 // patching Leaflet's default icon URLs (fragile, breaks again on the next
 // bundler upgrade), this defines a custom divIcon built from a plain
-// emoji glyph in an inline SVG-free <div> — no image asset loading
+// emoji glyph in an inline SVG-free <div> no image asset loading
 // involved at all, so it can't break the same way again.
 const pinIcon = L.divIcon({
   className: 'civicpulse-pin-icon',
@@ -23,7 +23,7 @@ const pinIcon = L.divIcon({
   iconAnchor: [18, 34], // roughly the tip of the pin emoji, not its center
 });
 
-// Severity option definitions — label, description and selected border/bg colour
+// Severity option definitions: label, description and selected border/bg colour
 const SEVERITY_OPTIONS = [
   { value: 1, label: 'Low',      description: 'Minor inconvenience, no safety risk',      color: 'border-gray-300 bg-gray-50 text-gray-700'       },
   { value: 2, label: 'Medium',   description: 'Noticeable problem, limited impact',        color: 'border-amber-300 bg-amber-50 text-amber-700'    },
@@ -31,7 +31,7 @@ const SEVERITY_OPTIONS = [
   { value: 4, label: 'Critical', description: 'Safety hazard or community access blocked', color: 'border-red-300 bg-red-50 text-red-700'          },
 ];
 
-// Inner map component — listens for click events and drops a pin
+// Inner map component listens for click events and drops a pin
 function LocationPicker({ onLocationSelect, selectedLocation }) {
   useMapEvents({
     click(e) {
@@ -61,7 +61,7 @@ export default function SubmitReportPage() {
   // ── Location detection ────────────────────────────────────────────────────
   // UX CHANGE: district/sector/cell are no longer chosen from cascading
   // dropdowns. The citizen just drops a pin; the backend detects the
-  // nearest cell (and its parent sector/district) from that pin — see
+  // nearest cell (and its parent sector/district) from that pin see
   // GET /reports/detect-location and services/geoDetection.js. This state
   // just holds a *preview* of that detection so the citizen has some
   // confirmation before submitting; the actual detection that decides
@@ -71,6 +71,7 @@ export default function SubmitReportPage() {
   const [detecting, setDetecting] = useState(false);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!mapLocation) { setDetection(null); return; }
     let cancelled = false;
     setDetecting(true);
@@ -111,8 +112,8 @@ export default function SubmitReportPage() {
     if (!title.trim())         errors.title       = 'Title is required';
     if (!categoryId)           errors.categoryId  = 'Please select a category';
     if (!severity)             errors.severity    = 'Please select a severity level';
-    // Photo is mandatory — citizens cannot submit without photographic evidence
-    if (!photoUrl)             errors.photoUrl    = 'A photo is required — please upload one before submitting';
+    // Photo is mandatory. Citizens cannot submit without photographic evidence
+    if (!photoUrl)             errors.photoUrl    = 'A photo is required; please upload one before submitting';
     if (!mapLocation)          errors.mapLocation = 'Please click on the map to pin the exact location';
     return errors;
   };
@@ -223,7 +224,7 @@ export default function SubmitReportPage() {
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="Describe the problem in detail — how long it has existed, who is affected, any safety hazards..."
+              placeholder="Describe the problem in detail how long it has existed, who is affected, any safety hazards..."
               rows={3}
               className="w-full border border-border rounded-lg px-3 py-2.5 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary"
             />
@@ -353,10 +354,10 @@ export default function SubmitReportPage() {
           )}
         </div>
 
-        {/* ── Section 5: Map Pin (exact location — also determines area) ──── */}
+        {/* Section 5: Map Pin (exact location also determines area) */}
         {/* UX CHANGE: this section used to be paired with a separate
             "Administrative Location" section containing cascading
-            district → sector → cell → village dropdowns. That's gone —
+            district → sector → cell → village dropdowns. That's gone 
             dropping the pin here is now the ONLY location input. The
             backend detects the nearest cell from these coordinates (see
             GET /reports/detect-location, called below as a live preview,
@@ -376,7 +377,7 @@ export default function SubmitReportPage() {
             <p className="text-danger text-xs mb-3">{fieldErrors.mapLocation}</p>
           )}
 
-          {/* Coordinate display — green when pin has been placed */}
+          {/* Coordinate display green when pin has been placed */}
           <div className={`mb-2 text-xs px-3 py-2 rounded-lg font-medium
             ${mapLocation
               ? 'bg-green-50 border border-green-200 text-green-700'
@@ -406,7 +407,7 @@ export default function SubmitReportPage() {
             </div>
           )}
 
-          {/* Map — red border when validation fails, normal border otherwise */}
+          {/* Map red border when validation fails, normal border otherwise */}
           <div className={`rounded-xl overflow-hidden border-2
             ${fieldErrors.mapLocation ? 'border-danger' : 'border-border'}`}
           >

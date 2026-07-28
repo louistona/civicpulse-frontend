@@ -38,7 +38,7 @@ export default function Navbar() {
 
         {user ? (
           <>
-            {/* FIX: Dashboard link is now INSIDE the logged-in block and appears
+            {/* Dashboard link is now INSIDE the logged-in block and appears
                 BEFORE the user name and logout button. Previously it was placed
                 after the logout button causing the nav to read:
                 "Name · Official | Log out | Dashboard" which looked broken.

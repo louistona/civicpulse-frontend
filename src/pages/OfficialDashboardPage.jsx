@@ -24,7 +24,7 @@ export default function OfficialDashboardPage() {
   const [stats,      setStats]      = useState({ total: 0, received: 0, in_progress: 0, resolved: 0 });
 
   // UX FIX: this list used to fetch every matching report in one
-  // unbounded request with no cap in the UI — the exact page an official
+  // unbounded request with no cap in the UI the exact page an official
   // needs most (triaging incoming reports) was also the most likely to get
   // overcrowded. Now paginated via the shared hook; only non-empty filter
   // values are passed through, and the hook resets to page 1 automatically
@@ -40,7 +40,7 @@ export default function OfficialDashboardPage() {
   // Redirect non-officials away from this page
   useEffect(() => {
     if (user && user.role !== 'official') navigate('/');
-    // FIX: was navigate('/auth') which sends to the citizen login page.
+    // navigate('/auth') which sends to the citizen login page.
     // Officials whose session has expired should be sent to the official
     // login page, not the citizen page with a phone + PIN form.
     if (!user) navigate('/auth/official');
@@ -57,7 +57,7 @@ export default function OfficialDashboardPage() {
     });
   }, []);
 
-  // True, unfiltered-by-status counts for the stat cards — see
+  // True, unfiltered-by-status counts for the stat cards see
   // getReportStats in reportController.js. Independent of the paginated
   // list above.
   useEffect(() => {
@@ -180,7 +180,7 @@ export default function OfficialDashboardPage() {
           </div>
         </div>
 
-        {/* Reset filters button — only shown when at least one filter is active */}
+        {/* Reset filters button only shown when at least one filter is active */}
         {Object.values(filters).some(v => v !== '') && (
           <button
             onClick={() => setFilters({ category: '', severity: '', district: '', status: '' })}

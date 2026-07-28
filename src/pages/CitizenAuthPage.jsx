@@ -14,21 +14,18 @@ export default function CitizenAuthPage() {
   const [mode, setMode] = useState('signup'); // 'signup' | 'login'
   const [step, setStep] = useState(1);        // 1=details, 2=otp, 3=pin
 
-  // Step 1 — Details
+  // Step 1 Details
   const [name,    setName]    = useState('');
   const [phone,   setPhone]   = useState('');
   const [location, setLocation] = useState({
     district_id: '', sector_id: '', cell_id: '', village: ''
   });
 
-  // Step 2 — OTP
+  // Step 2 OTP
   const [otp,   setOtp]   = useState('');
-  // FIX: this was never captured before, even though the backend's
-  // register endpoint requires it (see below). Filled in from the
-  // verify-otp response in handleVerifyOTP, sent back in handleRegister.
   const [verificationToken, setVerificationToken] = useState('');
 
-  // Step 3 — PIN
+  // Step 3 PIN
   const [pin,        setPin]        = useState('');
   const [pinConfirm, setPinConfirm] = useState('');
 
@@ -92,23 +89,23 @@ export default function CitizenAuthPage() {
         code:  otp,
       });
 
-      // FIX: this used to check `next_step === 'home'` to auto-login an
-      // existing user with a fresh token — but the backend no longer ever
+      // this used to check `next_step === 'home'` to auto-login an
+      // existing user with a fresh token but the backend no longer ever
       // returns that (see authController.js: OTP-only login without a PIN
       // was a security bypass and was removed; existing users now get
       // next_step: 'login' and no token at all, and must use the normal
-      // phone+PIN login). This branch is updated to match, and — the
-      // actual bug being fixed here — the verification_token for NEW users
+      // phone+PIN login). This branch is updated to match, and the
+      // actual bug being fixed here, the verification_token for NEW users
       // is now captured into state so it can be sent along with
       // /citizen/register, which requires it.
       if (res.data.next_step === 'login') {
-        // Existing account — send them to the login form instead of
+        // Existing account; send them to the login form instead of
         // silently failing at the register step further down.
         setMode('login');
         setStep(1);
-        setError('This number already has an account — please log in with your PIN below.');
+        setError('This number already has an account; please log in with your PIN below.');
       } else {
-        // New user — store the verification token and proceed to PIN setup
+        // New user store the verification token and proceed to PIN setup
         setVerificationToken(res.data.verification_token);
         setStep(3);
       }
@@ -158,11 +155,6 @@ export default function CitizenAuthPage() {
         cell_id:     location.cell_id,
         village:     location.village || '',
         phone:       normalizedPhone,
-        // FIX: this was missing entirely. The backend requires a valid,
-        // unexpired verification_token (a short-lived JWT proving this
-        // phone actually completed OTP verification) and rejects
-        // registration without one — "Phone verification is required
-        // before registering". It's captured in handleVerifyOTP above.
         verification_token: verificationToken,
       });
       login(res.data.token, res.data.user);

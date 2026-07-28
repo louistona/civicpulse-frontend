@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { Shield, MapPin, Camera, Database, Users, Scale, Mail, ChevronRight } from "lucide-react";
 
-// FIX: this content has been corrected against what CivicPulse actually
+// this content has been corrected to match what CivicPulse actually
 // does in its current deployed form. The version this was adapted from
-// made several claims that don't match the real app — see inline notes
+// made several claims that didn't match the real app see inline notes
 // below at each corrected point. A privacy policy that overstates its own
 // protections is arguably worse than having none, since it gives users
 // false confidence about data that is, in reality, exposed. Restyled to
@@ -56,10 +56,6 @@ export default function PrivacyPolicyPage() {
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="flex items-center gap-2 text-[13px] uppercase tracking-wider text-white/70 mb-2">
             <Shield size={14} />
-            {/* FIX: was "Gasabo District" — the deployed app's data
-                covers all three Kigali districts (Gasabo, Kicukiro,
-                Nyarugenge), not Gasabo alone. A legal document should
-                match the actual technical scope of what's collected. */}
             <span>CivicPulse · Kigali City</span>
           </div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-tight">
@@ -67,7 +63,7 @@ export default function PrivacyPolicyPage() {
           </h1>
           <p className="mt-3 text-white/80 max-w-2xl text-[15px]">
             How CivicPulse collects, protects, and uses your data when you report an
-            infrastructure issue — written in plain language, in line with Rwanda's Law
+            infrastructure issue written in plain language, in line with Rwanda's Law
             N° 058/2021 on the Protection of Personal Data and Privacy.
           </p>
           <p className="mt-4 text-xs text-white/60">Last updated: 26 July 2026 · Version 1.1</p>
@@ -105,8 +101,8 @@ export default function PrivacyPolicyPage() {
           <Section id="who-we-are" icon={Users} title="1. Who we are">
             <p>
               CivicPulse is a civic-technology platform that lets residents of Kigali City
-              report infrastructure deficiencies — such as damaged roads, broken
-              streetlights, or non-functioning water points — and tracks how local
+              report infrastructure deficiencies such as damaged roads, broken
+              streetlights, or non-functioning water points and tracks how local
               government offices respond, through a public accountability scorecard.
             </p>
             <p>
@@ -116,9 +112,6 @@ export default function PrivacyPolicyPage() {
           </Section>
 
           <Section id="what-we-collect" icon={Database} title="2. What we collect">
-            {/* FIX: added — the original didn't mention that CivicPulse
-                can be used without an account at all, which materially
-                changes what's collected for a large share of users. */}
             <p>
               CivicPulse does not require an account to submit a report. If you report
               without signing up, we collect only the report content described below and,
@@ -140,15 +133,12 @@ export default function PrivacyPolicyPage() {
               our community-weighted severity model, and displaying reports on the public
               heatmap and accountability scorecard. This is our lawful basis for processing
               under Rwanda's Law N° 058/2021 relating to the Protection of Personal Data and
-              Privacy — namely, performance of the service you've requested and our
+              Privacy namely, performance of the service you've requested and our
               legitimate interest in improving public infrastructure accountability.
             </p>
           </Section>
 
           <Section id="location-photos" icon={MapPin} title="4. Location & photo data">
-            {/* FIX: this whole section previously claimed protections
-                that are not actually in place — see notes on each point.
-                Rewritten to describe what the app actually does. */}
             <p>
               CivicPulse is a <em>public</em> reporting tool by design: the location and
               photo of every report are visible to any visitor on the map, the report
@@ -159,10 +149,10 @@ export default function PrivacyPolicyPage() {
               connection not to be public.
             </p>
             <ul className="list-disc pl-5 space-y-1.5">
-              <li>The exact map coordinates you pin are shown publicly on the report — they are <strong>not</strong> generalised or blurred to a wider area.</li>
-              <li>We use your pin's location only to automatically determine the nearest administrative cell, so we can notify nearby registered residents and the relevant district office — this detection happens on our server and does not publish anything beyond the pin you already placed.</li>
+              <li>The exact map coordinates you pin are shown publicly on the report they are <strong>not</strong> generalised or blurred to a wider area.</li>
+              <li>We use your pin's location only to automatically determine the nearest administrative cell, so we can notify nearby registered residents and the relevant district office this detection happens on our server and does not publish anything beyond the pin you already placed.</li>
               <li>Uploaded photos may still contain embedded metadata (such as GPS location or device information) from the device that took them, depending on your photo storage provider's settings. If you want to be cautious, avoid photos taken with location tagging enabled, or crop/re-save the image before uploading.</li>
-              <li>We do not currently run automated screening of uploaded photos for identifiable faces, license plates, or similar — please avoid including bystanders or identifiable third parties in your photo where possible.</li>
+              <li>We do not currently run automated screening of uploaded photos for identifiable faces, license plates, or similar, please avoid including bystanders or identifiable third parties in your photo where possible.</li>
             </ul>
           </Section>
 
@@ -199,15 +189,8 @@ export default function PrivacyPolicyPage() {
           </Section>
 
           <Section id="verification" icon={Scale} title="8. Community verification">
-            {/* FIX: retitled from "Report verification" and reworded —
-                the original implied an official pre-publication vetting
-                step ("submissions pass through a verification step...
-                before they affect a public score"), which overstates it.
-                In the actual app, every report is public immediately on
-                submission; severity is only ever refined afterwards by
-                community voting, never gated beforehand. */}
             <p>
-              Reports are published immediately on submission — there is no pre-publication
+              Reports are published immediately on submission, there is no pre-publication
               review. Severity is initially set by the person reporting, and is then refined
               in real time as other residents vote on whether they agree the issue is as
               serious as described. This weighted community input, not a single report, is
@@ -262,8 +245,6 @@ export default function PrivacyPolicyPage() {
           </Section>
 
           <Section id="changes" icon={Database} title="13. Changes to this policy">
-            {/* FIX: this section was an unfinished sentence ("Any
-                material changes made need.") — written out in full. */}
             <p>
               We may update this policy as CivicPulse evolves. Material changes will be
               posted on this page with an updated "Last updated" date, and where the change

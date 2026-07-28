@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 
 /**
- * Site-wide footer. Didn't exist before this — added specifically so the
+ * Site-wide footer. Didn't exist before this and was added specifically so the
  * new Privacy Policy & Terms page has an actual discoverable link on
  * every page, rather than being reachable only by typing the URL directly.
  */

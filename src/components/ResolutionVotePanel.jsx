@@ -37,6 +37,7 @@ export default function ResolutionVotePanel({ reportId, onReverted }) {
     }
   }, [reportId]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchVotes(); }, [fetchVotes]);
 
   const vote = async (voteType) => {

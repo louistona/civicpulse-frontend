@@ -146,7 +146,7 @@ export default function ResolvedReportsPage() {
 
                   {totalVotes === 0 && (
                     <p className="text-xs text-text-muted border-t border-border pt-2 mt-2">
-                      No community verification votes yet — be the first to confirm
+                      No community verification votes yet. Be the first to confirm
                     </p>
                   )}
                 </div>
