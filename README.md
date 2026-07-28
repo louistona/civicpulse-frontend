@@ -2,7 +2,7 @@
 
 > **React web application for CivicPulse** — A community platform for infrastructure deficiency reporting and government accountability in Rwanda.
 
-[![CI/CD](https://github.com/louistona/civicpulse-frontend/actions/workflows/deploy.yml/badge.svg)](https://github.com/louistona/civicpulse-frontend/actions/workflows/deploy.yml)
+[![CI/CD](https://github.com/louistona/civicpulse-frontend/.github/workflows/deploy.yml/badge.svg)](https://github.com/louistona/civicpulse-frontend/.github/workflows/deploy.yml)
 [![React](https://img.shields.io/badge/React-19-61DAFB?logo=react)](https://react.dev)
 [![Vite](https://img.shields.io/badge/Vite-8-646CFF?logo=vite)](https://vitejs.dev)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3.4-06B6D4?logo=tailwindcss)](https://tailwindcss.com)
@@ -746,7 +746,7 @@ The evaluation methodology uses the validated 10-item SUS questionnaire administ
 
 > 📹 **Watch the CivicPulse full walkthrough:**
 >
-> **[▶ Click to watch — YouTube](YOUR_VIDEO_LINK_HERE)**
+> **[▶ Click to watch — YouTube](https://youtu.be/eIwL_lGSnmg)**
 >
 
 ---
